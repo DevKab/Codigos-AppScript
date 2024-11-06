@@ -1,0 +1,356 @@
+function onOpen() { 
+    var ui = SpreadsheetApp.getUi();
+  var mensaje = "Recuerda que esta plantilla contiene listas anidadas y recibe información de otros archivos:"
+    + "\n- 🚫 No agregar o quitar columnas y filas."
+    + "\n- 🚫 No alterar fórmulas."
+    + "\n- 🚫 No modificar la posición de las tablas o el rango."
+    + "\n- 🔷 ASEGÚRATE DE LLENAR TODAS LAS COLUMNAS IDENTIFICADAS EN COLOR AZÚL"
+    + "\n- ✅ Para un uso adecuado del archivo consulta tu instrucción de trabajo P-AE-IT-007_ SOLICITUD DE GASTOS CEOA"
+    + "\n- ☎︎ Contacta a 'Optimización' para realizar modificaciones. V7";
+  
+  ui.alert(mensaje);
+
+
+    ui.createMenu('📅 | Backup')
+    .addItem('1. Copiado 002 - 003', 'ejemploFuncion')
+    .addItem('2. Backup del 10-R', 'allFunct')
+    .addToUi();
+}
+
+function allFunct() {
+  copiarFormatoAGoogleDrive();
+  copiarYPegarG2();
+  copiarArchivosG2(); //implementado 03/06/2024
+}
+
+function copiarYPegarG2() {//se queda igual
+  var hojaOrigenDestino = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("G2 - GASTOS ABBY (Principal)");
+  var columnas = ['H', 'J', 'L', 'N', 'P'];
+  columnas.forEach(function(col) {
+    var datos = hojaOrigenDestino.getRange(`${col}68`).getValues();
+    hojaOrigenDestino.getRange(`${col}5`).setValues(datos);
+  });
+}
+
+
+function copiaYpegarDatos_SD(hojaOrigen, hojaDestino, rangoOrigen, columnaInicio, rangoLetras) { //quedo 4:37, G1,G2, G3 de SD
+  var datos = hojaOrigen.getRange(rangoOrigen).getValues();
+  let ultimaFila = encontrarUltimaFilaEnColumna(hojaDestino, rangoLetras);
+  hojaDestino.getRange(ultimaFila + 1, columnaInicio, datos.length, datos[0].length).setValues(datos);
+}
+
+function encontrarUltimaFilaEnColumna(hojaDestino, rangoLetras) {
+  var valores = hojaDestino.getRange(rangoLetras).getValues();
+  var ultimaFila = 0;
+
+  for (var i = valores.length - 1; i >= 0; i--) {
+    if (valores[i].some(cell => cell !== "")) {
+      ultimaFila = i + 1;
+      break;
+    }
+  }
+
+  return ultimaFila;
+}
+
+
+function copiarYpegarDatos_FT12(hojaOrigen, hojaDestino, rangoOrigen, columnaInicio) { //FUNCIONA 2:32
+  // Obtener los datos desde la hoja de origen (D5:N407)
+  var datos = hojaOrigen.getRange(rangoOrigen).getDisplayValues(); //correccion 29/04/2024
+
+  // Encontrar la última fila con valores en la hoja de destino (columna C)
+  var ultimaFilaDestino = hojaDestino.getLastRow();
+
+  // Pegar los datos en la hoja de destino (C:M) después de la última fila con valores
+  hojaDestino.getRange(ultimaFilaDestino + 1, columnaInicio, datos.length, datos[0].length).setValues(datos);
+}
+
+function copiarFormatoAGoogleDrive() {
+  try {
+    var hojaDeCalculo = SpreadsheetApp.getActiveSpreadsheet();// Obtén la hoja de cálculo activa
+    var currentDate = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+    var nombreArchivo = hojaDeCalculo.getName();// Obtén el nombre de la hoja de cálculo
+    var nuevaHojaDeCalculo = hojaDeCalculo.copy('copia ' + nombreArchivo + currentDate); // Crea una nueva hoja de cálculo
+    var idNuevoArchivo = nuevaHojaDeCalculo.getId();// Obtén la ID del archivo de la nueva hoja de cálculo
+    var nuevoNombre = 'Copia de ' + nombreArchivo; // Cambia el nombre del archivo copiado
+    DriveApp.getFileById(idNuevoArchivo).setName(nuevoNombre); // Puedes ajustar el nuevo nombre según tus necesidades
+    var carpetaDestino = DriveApp.getFolderById('1fqvd7zBXATvWHQzHDmLuvr_4jZ0d_8nf'); // Reemplaza 'ID_DE_LA_CARPETA' con la ID de la carpeta destino 10HcEi2RlaT1U_BwBsWzcEzW0JBJfQb8q //carpeta mia: 1NB8_H0vuuGaxXzn0n2Wi1FlBqDPYxc7e
+    DriveApp.getFileById(idNuevoArchivo).moveTo(carpetaDestino); // Mueve el nuevo archivo a la carpeta de destino
+    Logger.log('Copia de formato creada y guardada en la carpeta destino. Nombre del archivo: ' + nuevoNombre); // Registra el nombre del archivo en el registro
+
+    var hojasSD = [
+      { origen: "G2 - GASTOS ABBY (Principal)", destino: "ACUMULADO GPA", rango: "D77:AD254", columnaInicio: 2, rangoLetras: "B:AB" },//=  COPIO
+      { origen: "ENTRECUENTAS", destino: "SD", rango: "O2:Q50", columnaInicio: 3, rangoLetras: "C:E" }//modificado 11/09/2024 = COPIA
+    ];
+
+    hojasSD.forEach(function(hoja) {
+      var hojaOrigen = hojaDeCalculo.getSheetByName(hoja.origen);
+      var hojaDestino = nuevaHojaDeCalculo.getSheetByName(hoja.destino);
+      copiaYpegarDatos_SD(hojaOrigen, hojaDestino, hoja.rango, hoja.columnaInicio,hoja.rangoLetras);
+    });
+
+    /*g1 Y g1 FONDEO DE TARJETAS */
+    var hojasDatosFT = [
+      { origen: "ENTRECUENTAS", destino: "FONDEO DE TARJETAS", rango: "O93:T126", columnaInicio: 3 },//modificado 11/09/2024 C-H = COPIO
+      { origen: "G2 - GASTOS ABBY (Principal)", destino: "T EDO CTA 2024", rango: "D261:O271", columnaInicio: 2 } //modificado 11/09/2024 = COPIO
+    ];
+
+    hojasDatosFT.forEach(function(hoja) {
+      var hojaOrigen = hojaDeCalculo.getSheetByName(hoja.origen);
+      var hojaDestino = nuevaHojaDeCalculo.getSheetByName(hoja.destino);
+      copiarYpegarDatos_FT12(hojaOrigen, hojaDestino, hoja.rango, hoja.columnaInicio);
+    });
+
+    
+
+    limpiarCeldasEnHojas(nuevaHojaDeCalculo);
+    eliminarRangosEnHojaProtegida(nuevaHojaDeCalculo);
+
+  } catch (error) {
+    Logger.log('Error: ' + error.toString());
+  }
+} 
+
+
+function limpiarCeldasEnHojas(nuevaHojaDeCalculo) {
+  var hojas = [
+    { nombre: "G2 - GASTOS ABBY (Principal)", rangos: ["H6:Q67", "D261:O271", "D77:AD254", "AD75"] },
+    { nombre: "ENTRECUENTAS", rangos: ["B3:C10", "B12:C16", "B18:C25", "B27:C32", "B34:C38", "B40:C44", "B46:C50", "B52:C56", "B58:C62", "B64:C68", "B70:C78", "B80:C84", "B86:C90", 
+                                       "B92:C96", "B98:C102", "B104:C108", "B110:C114", "B116:C120", "W253:X257", "B128:C132", "B134:C138", "B140:C144", "B146:C150", "B152:C156", "B158:C162", 
+                                       "F3:G7", "F9:G13", "F15:G19", "F21:G25", "F27:G34", "F36:G40", "F42:G46", "F48:G55", "F57:G64", "F66:G70", "F72:G81", "F83:G87", "F89:G93", "F95:G99", "F101:G105", "F107:G111", "F113:G117", "F119:G123", "F125:G129", "F131:G138", "F140:G148", "F150:G154", "F156:G160", "F162:G166", "F168:G172", "F174:G178", "F180:G184", "F186:G190",
+                                       "K3:L23", "K26:L39", "K42:L60", "K63:L86", "K89:L109", "O2:Q50", "O54:T89", "O93:T126"
+                                      ] }
+  ];
+
+  hojas.forEach(function(hoja) {
+    var sheet = nuevaHojaDeCalculo.getSheetByName(hoja.nombre);
+    hoja.rangos.forEach(function(rango) {
+      sheet.getRange(rango).clearContent();
+    });
+  });
+}
+
+function eliminarRangosEnHojaProtegida(nuevaHojaDeCalculo) {
+  try {
+    //var hojaDeCalculo = SpreadsheetApp.getActiveSpreadsheet();
+    var hoja = nuevaHojaDeCalculo.getSheetByName("HistorialEjecuciones"); // Nombre de la hoja protegida
+
+    // Buscar la protección de la hoja
+    var proteccion = hoja.getProtections(SpreadsheetApp.ProtectionType.SHEET)[0];
+
+    if (proteccion) {
+      // Guardar los editores actuales para restaurar la protección después
+      var editores = proteccion.getEditors();
+      
+      // Desactivar temporalmente la protección
+      proteccion.remove();
+      
+      Logger.log("Protección eliminada temporalmente");
+
+      // Limpiar los rangos especificados
+      var rangos = ["A1:E1", "A2:E2", "A3:E3"];
+      rangos.forEach(function(rango) {
+        hoja.getRange(rango).clearContent();
+      });
+      
+      Logger.log("Celdas limpiadas correctamente");
+
+      // Restaurar la protección de la hoja
+      var nuevaProteccion = hoja.protect();
+      nuevaProteccion.setWarningOnly(false); // La protección es estricta
+      editores.forEach(function(editor) {
+        nuevaProteccion.addEditor(editor); // Restablecer los editores originales
+      });
+      
+      Logger.log("Protección restaurada");
+
+    } else {
+      Logger.log("La hoja no tiene protección.");
+    }
+
+  } catch (error) {
+    Logger.log("Error: " + error.toString());
+  }
+}
+
+function copiarArchivosG2() { //saca a una copia de g2 y de ENTRECUENTAS ==funciona
+  var hojaDeCalculo = SpreadsheetApp.getActiveSpreadsheet();
+  var currentDate = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+  var nombreArchivo = hojaDeCalculo.getName();
+  var hojasDatos = ["ENTRECUENTAS" , "G2 - GASTOS ABBY (Principal)"];
+    
+  var carpetaBackup = DriveApp.getFolderById("1fqvd7zBXATvWHQzHDmLuvr_4jZ0d_8nf");//id de la carpeta a depositar. //carpeta mia id:1kez8C5PfEDB4PHH0I6fEnMje-N76YCPX
+
+  //Crear un nuevo archivo donde se copiaran las hojas
+  var nombreBackup = 'Backup - ' + nombreArchivo + ' - ' + currentDate;
+  nuevaHojaDeCalculo = SpreadsheetApp.create(nombreBackup);
+
+  hojasDatos.forEach(function(hojaNombre){
+    var hojaOrigen = hojaDeCalculo.getSheetByName(hojaNombre);
+    if (!hojaOrigen) {
+      Logger.log('No se encontró la hoja con el nombre: ' + hojaNombre);
+      return;
+    }
+
+    // Copiar la hoja al archivo nuevo
+    var hojaNueva = hojaOrigen.copyTo(nuevaHojaDeCalculo);
+    hojaNueva.setName(hojaNombre);
+  });
+
+  // Eliminar la hoja inicial creada al momento de crear el nuevo archivo
+  var hojaInicial = nuevaHojaDeCalculo.getSheets()[0];
+  nuevaHojaDeCalculo.deleteSheet(hojaInicial);
+  
+  // Mover el archivo a la carpeta de respaldo
+  var idNuevoArchivo = nuevaHojaDeCalculo.getId();
+  DriveApp.getFileById(idNuevoArchivo).moveTo(carpetaBackup);
+}
+
+/////////////////////////////////////MAESTER
+function ejemploFuncion() {//principal
+  try {
+    // Lógica de tu función
+    Logger.log("Ejecutando función ejemplo...");
+    
+    // Registro exitoso de la ejecución
+    registrarEjecucion('ejemploFuncion', 'Éxito');
+  } catch (error) {
+    // Registro en caso de fallo
+    registrarEjecucion('ejemploFuncion', 'Error: ' + error.message);
+  }
+}
+
+function registrarEjecucion(funcionNombre, resultado) {
+  var hojaHistorial = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('HistorialEjecuciones'); // Obtén la hoja llamada 'HistorialEjecuciones'
+  var ui = SpreadsheetApp.getUi(); //obtener la interfaz del usuario para mostrar alertas
+  
+  if (!hojaHistorial) {
+    hojaHistorial = SpreadsheetApp.getActiveSpreadsheet().insertSheet('HistorialEjecuciones');
+    hojaHistorial.appendRow(['Fecha', 'Hora', 'Función', 'Usuario', 'Resultado']);
+  }
+
+  var fechaActual = new Date();
+  var fechaFormato = Utilities.formatDate(fechaActual, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  
+  // Verificar si ya hay un registro de esta función en el día actual
+  var datos = hojaHistorial.getDataRange().getValues();
+  for (var i = 1; i < datos.length; i++) {
+    var fechaEnHoja = datos[i][0]; // Fecha de la hoja
+    // Si la fecha en la hoja no está formateada correctamente, intenta formatearla
+    if (fechaEnHoja instanceof Date) {
+      fechaEnHoja = Utilities.formatDate(fechaEnHoja, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    }
+    // Comparar la fecha formateada de la hoja con la fecha actual
+    if (fechaEnHoja === fechaFormato && datos[i][2] === funcionNombre) {
+      Logger.log("La función " + funcionNombre + " ya se ejecutó hoy.");
+      ui.alert("La función '" + funcionNombre + "' ya ha sido registrada hoy."); // Mostrar alerta al usuario
+      return; // Si ya existe un registro de esta función en el día actual, no hacemos nada
+    }
+  }
+
+   // Si no existe un registro para hoy, se agrega uno nuevo
+    var usuario = Session.getActiveUser().getEmail(); // Obtener el correo del usuario que ejecuta el script
+    
+    // Añadir un nuevo registro en la hoja de historial
+    hojaHistorial.appendRow([
+      fechaFormato, // Solo la fecha, no la hora
+      Utilities.formatDate(fechaActual, Session.getScriptTimeZone(), 'HH:mm:ss'), // La hora de ejecución
+      funcionNombre,
+      usuario || "Anónimo",
+      resultado
+    ]);
+
+    concentrado(); //si no esta registrada el metodo.
+}
+
+function concentrado(){//conectado al hijo.
+  var libroOrigen = SpreadsheetApp.openById('1gB0pjxHXDZum2-iWU39NMhqw-O9OfRLE4AxgJLD9fks'); // P-AE-FT-002-SOLICITUD DE GASTOS AGENDA == 1M_kZkawlblxtMYLMhWtE3uenmQthCpjI8VCCdRldUSc
+  var libroDestino = SpreadsheetApp.getActiveSpreadsheet(); // Obtener el libro activo //P-AE-FT-007_10-R.
+
+  var hojaG2 = [
+    { origen: "SOLICITUDES 2024",  destino: "G2 - GASTOS ABBY (Principal)", rango: "B:AB"},
+    { origen: "CONCENTRADO",  destino: "G2 - GASTOS ABBY (Principal)", rango: "A:AA"}
+  ];
+
+  hojaG2.forEach(function(hoja) {
+    var hojaOrigen = libroOrigen.getSheetByName(hoja.origen);
+    var hojaDestino = libroDestino.getSheetByName(hoja.destino);
+    metodo10R(hojaOrigen, hojaDestino, hoja.rango);
+  });
+}
+
+/*funcion para el baciado para 10 R */
+function metodo10R(hojaOrigen, hojaDestino, rango) {//funciona original == 19/09/2024
+  var today = new Date();
+  
+  // Formatear la fecha de hoy en DD/MM/YY
+  var fomateoTaday = Utilities.formatDate(today, Session.getScriptTimeZone(), 'dd/MM/yy');
+
+  // Rango de pegado en la hoja destino (D77:AD254)
+  var filaInicioDestino = 77; // Fila 77 en la hoja destino
+  var filaFinalDestino = 254; // Fila 254 en la hoja destino
+  var columnaInicioDestino = 4; // Columna D en la hoja destino
+  var columnaFinalDestino = 29; // Columna AD en la hoja destino
+
+  // Obtener todos los datos de la hoja origen
+ /*var lastRowOrigen = hojaOrigen.getLastRow();  // Última fila con datos en la hoja de origen
+      var dataRange = hojaOrigen.getRange(2, 1, lastRowOrigen - 1, 32); // Rango desde la fila 2, columnas A a AF (32 columnas)
+      var dataValues = dataRange.getValues();*/
+
+  var dataValues = hojaOrigen.getRange(rango).getValues();
+
+  // Encontrar la última fila con datos en el rango D77:AD254 en la hoja destino
+  var datosDestino = hojaDestino.getRange(filaInicioDestino, columnaInicioDestino, filaFinalDestino - filaInicioDestino + 1, columnaFinalDestino - columnaInicioDestino + 1).getValues();
+  
+  var ultimaFilaDestino = filaInicioDestino;
+  
+  // Verificar cuál es la última fila ocupada en el rango D77:AD254
+  for (var i = 0; i < datosDestino.length; i++) {
+    var fila = datosDestino[i];
+    // Si la fila no está vacía (es decir, tiene algún valor), entonces es una fila ocupada
+    if (fila.some(function (cell) { return cell !== "" && cell !== null; })) {
+      ultimaFilaDestino = filaInicioDestino + i + 1;
+    }
+  }
+  
+  // Controlar la fila actual para pegar datos
+  var filaDestino = ultimaFilaDestino;
+
+  // Recorrer todas las filas de datos de la hoja origen
+  for (var i = 0; i < dataValues.length && filaDestino <= filaFinalDestino; i++) {
+    var dataFecha = dataValues[i][0]; // Columna A (fecha)
+
+    // Intentar convertir la fecha si no es un objeto Date
+    if (typeof dataFecha === 'string') {
+      dataFecha = new Date(dataFecha); // Convertir cadena a fecha
+    }
+
+    // Verificar si dataFecha es un objeto Date válido
+    if (dataFecha instanceof Date && !isNaN(dataFecha.getTime())) {
+      // Formatear la fecha obtenida
+      var fomateoFecha = Utilities.formatDate(dataFecha, Session.getScriptTimeZone(), 'dd/MM/yy');
+      
+      // Comparar con la fecha de hoy
+      if (fomateoFecha === fomateoTaday) { // Verificar si la celda A tiene la fecha de hoy
+        Logger.log("La fecha de hoy es: " + fomateoTaday);
+
+        // Verificar si la celda Z es "PAGADO" o "PAGADO Y COMPROBANTE EN CARPETA"
+        if (dataValues[i][24] === "PAGADO" || dataValues[i][24] === "PAGADO Y COMPROBANTE EN CARPETA") {
+          // Pegar datos en la hoja destino dentro del rango D77:AD254
+          hojaDestino.getRange(filaDestino, columnaInicioDestino, 1, columnaFinalDestino - columnaInicioDestino + 1)
+            .setValues([dataValues[i].slice(0, columnaFinalDestino - columnaInicioDestino + 1)]); // Pegar solo hasta la columna 29 (AC)
+          
+          filaDestino++; // Incrementar la fila destino para la siguiente inserción
+        }
+      }
+    } else {
+      Logger.log("La celda en la fila " + (i + 1) + " no contiene una fecha válida.");
+    }
+  }
+
+  if (filaDestino > filaFinalDestino) {
+    Logger.log("Se alcanzó el límite de filas en el rango de destino.");
+  } else {
+    Logger.log("Pegado finalizado, datos hasta la fila: " + (filaDestino - 1));
+  }
+}
