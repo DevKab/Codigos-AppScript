@@ -1,0 +1,221 @@
+function onOpen() { 
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('🗓️ | AgendaNew')
+    .addItem('Backup', 'fPrincipales')
+    .addToUi();
+}
+
+function fPrincipales() {
+  funcionesPrincipalesFilas();
+  funcionEliminarTodo();
+}
+
+function funcionesPrincipalesFilas() {//funciona 
+  // Llamadas a la función para cada hoja de origen
+  procesarYCopiarFilasAbierta("Consejo 2024- ifno");
+  recorrerColumnaCompletado("Consejo 2024- ifno");
+  procesarYCopiarFilasAbierta("Rosca de reyes DESPACHO - info");
+  recorrerColumnaCompletado("Rosca de reyes DESPACHO - info");
+  procesarYCopiarFilasAbierta("Regalos Navidad 2024- info");
+  recorrerColumnaCompletado("Regalos Navidad 2024- info");
+  procesarYCopiarFilasAbierta("Organizar Evento Dia de Reyes 06 Enero 2024- info");
+  recorrerColumnaCompletado("Organizar Evento Dia de Reyes 06 Enero 2024- info");
+  procesarYCopiarFilasAbierta("Propuesta Detalle Cumpleaños mensual- info");
+  recorrerColumnaCompletado("Propuesta Detalle Cumpleaños mensual- info");
+}
+
+
+function procesarYCopiarFilasAbierta(hojaOrigenNombre) { //FUNCIONA.== ABIERTAS
+  var hojaOrigen = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(hojaOrigenNombre);
+  var hojaDestino = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("CONCENTRADO");
+
+  var ultimaFilaOrigen = hojaOrigen.getLastRow();
+  var ultimaFilaDestino = hojaDestino.getLastRow();
+
+  // Definir el rango de celdas con fórmulas en la hoja de origen (por ejemplo, K42:N42)
+  var rangoFormulas = hojaDestino.getRange("K2:N2"); // RANGO DE ABIERTA
+
+  // Obtener los datos y las fórmulas desde la función obtenerDatosAbierta()
+  var datosARepetir = obtenerDatosAbiertas(hojaOrigen);
+
+  var contadorFilas = 0;
+
+  // Comenzar desde la fila 3 y recorrer hasta encontrar la primera fila vacía
+  for (var fila = 3; fila <= ultimaFilaOrigen; fila++) {
+    // Verificar si la celda en la columna A de la fila actual está vacía
+    var valorCelda = hojaOrigen.getRange(fila, 1).getValue();
+    if (valorCelda === '') {
+      // Si la celda está vacía, detener el bucle //BUCLE DE ABIETA
+      break;
+    }
+
+    // Si la celda no está vacía, realizar operaciones con la fila actual
+    var datosFila1 = hojaOrigen.getRange(fila, 1, 1, 5).getValues()[0];
+    var datosFila2 = hojaOrigen.getRange(fila, 8, 1, 1).getValue();
+    var datosRepetir = ["ABIERTO"].concat(datosARepetir[0], datosFila1, [""], datosFila2, [""]);
+
+    // Verificar si hay información en la fila
+    if (datosRepetir.some(function (valor) { return valor !== ''; })) {
+      // Incrementar el contador de filas
+      contadorFilas++;
+
+      // Realizar operaciones adicionales con datosRepetir si hay información
+      for (var i = 0; i < datosRepetir.length; i++) {
+        // Puedes realizar operaciones adicionales con cada elemento de datosRepetir si es necesario
+        var datosFila = datosRepetir[i];
+        Logger.log("Datos repetidos: " + datosFila);
+      }
+
+      // Insertar una nueva fila después de la última fila con valores
+      hojaDestino.insertRowAfter(ultimaFilaDestino);
+
+      // Pegar los datos en la hoja de destino (por ejemplo, columnas C:M)
+      hojaDestino.getRange(ultimaFilaDestino + 1, 1, 1, datosRepetir.length).setValues([datosRepetir]);
+
+      // Obtén el valor de las fórmulas
+      var formulas = rangoFormulas.getFormulasR1C1()[0];
+
+      // Obtén la última fila con datos en la hoja
+      var ultimaFila = ultimaFilaDestino;
+
+      // Establece el rango de celdas en el que deseas copiar las fórmulas
+      var rangoDestino = hojaDestino.getRange(ultimaFila + 1, 11, 1, formulas.length);
+
+      // Establece las fórmulas en el nuevo rango
+      rangoDestino.setFormulasR1C1([formulas]);
+
+      // Actualizar la variable ultimaFilaDestino para reflejar la nueva última fila
+      ultimaFilaDestino = hojaDestino.getLastRow();
+    } else {
+      Logger.log("No hay información en datosRepetir");
+    }
+  }
+
+  // Hacer algo con el contadorFilas, si es necesario
+  Logger.log("Número total de filas procesadas: " + contadorFilas);
+}
+
+
+function recorrerColumnaCompletado(hojaOrigenNombre) {//funciona refunciona == COMPLETADO
+  // Obtener la hoja de cálculo activa y la columna A
+  var hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(hojaOrigenNombre);
+  var hojaDestino = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("CONCENTRADO");
+
+  var ultimaFilaOrigen = hoja.getLastRow();
+  var ultimaFilaDestino = hojaDestino.getLastRow();
+
+  // Obtener los valores en la columna A
+  var valoresColumnaA = hoja.getRange("A:A").getValues();
+
+  // Definir el rango de celdas con fórmulas en la hoja de origen (por ejemplo, K42:N42)
+  var rangoFormulas = hojaDestino.getRange("K2:N2"); // RANGO DE ABIERTA
+
+  // Recorrer la columna A
+  for (var i = 0; i < valoresColumnaA.length; i++) {
+    if (valoresColumnaA[i][0] !== "") { // Verificar si la celda no está vacía
+      var cadena = valoresColumnaA[i][0];
+      var partes = cadena.split('-');
+
+      // Verificar si split generó al menos dos partes y la segunda parte es igual a 'COMPLETED ITEMS'
+      if (partes.length >= 2 && partes[1].trim() === 'COMPLETED ITEMS') {
+        var titulo = partes[0].trim();
+
+        Logger.log("Fila " + (i + 1) + ", Valor: " + titulo);
+        
+        for (var fila = i + 3; fila <= ultimaFilaOrigen; fila++) { // Comenzar desde la tercera fila
+          var valorCelda = hoja.getRange(fila, 1).getValue();
+          if (valorCelda === '') {
+            // Si la celda está vacía, detener el bucle
+            break;
+          }
+          Logger.log("Fila en la que estamos: " + (fila + 1));
+
+          // Si la celda no está vacía, realizar operaciones con la fila actual
+          var datosFila1 = hoja.getRange(fila, 1, 1, 8).getValues()[0];
+
+          var datosRepetir = ["COMPLETADO"].concat(titulo, datosFila1, [""]);
+
+          // Verificar si hay información en la fila
+          if (datosRepetir.some(function (valor) { return valor !== ''; })) {
+            // Realizar operaciones adicionales con datosRepetir si hay información
+            for (var j = 0; j < datosRepetir.length; j++) {
+              // Puedes realizar operaciones adicionales con cada elemento de datosRepetir si es necesario
+              var datosFila = datosRepetir[j];
+              Logger.log("Datos repetidos: " + datosFila);
+            }
+
+            // Insertar una nueva fila después de la última fila con valores
+            hojaDestino.insertRowAfter(ultimaFilaDestino);
+
+            // Pegar los datos en la hoja de destino (por ejemplo, columnas C:M)
+            hojaDestino.getRange(ultimaFilaDestino + 1, 1, 1, datosRepetir.length).setValues([datosRepetir]);
+
+            // Obtén el valor de las fórmulas
+            var formulas = rangoFormulas.getFormulasR1C1()[0];
+
+            // Obtén la última fila con datos en la hoja
+            var ultimaFila = ultimaFilaDestino;
+
+            // Establece el rango de celdas en el que deseas copiar las fórmulas
+            var rangoDestino = hojaDestino.getRange(ultimaFila + 1, 11, 1, formulas.length);
+
+            // Establece las fórmulas en el nuevo rango
+            rangoDestino.setFormulasR1C1([formulas]);
+
+            // Actualizar la variable ultimaFilaDestino para reflejar la nueva última fila
+            ultimaFilaDestino = hojaDestino.getLastRow();
+
+          } else {
+            Logger.log("No hay información en datosRepetir");
+          }
+        }
+      }
+    }
+  }
+}
+
+///complemento de filas abiertas///
+function obtenerDatosAbiertas(hojaOrigen) {
+  var datosOrigen = hojaOrigen.getRange("A1:C1").getValues()[0];
+
+  if (datosOrigen.length > 0) {
+    var cadenas = obtenerCadena(datosOrigen);
+    return cadenas;
+  } else {
+    Logger.log("La fila de origen no contiene valores.");
+    return null;
+  }
+}
+
+// Función para obtener las cadenas antes y después del "-"//saca un solo valor
+function obtenerCadena(datos) {
+  if (datos.length > 0) {
+    var cadena = datos[0]; // Obtener el valor de la columna A (por ejemplo)
+    var partes = cadena.split('-');
+    return [[partes[0].trim()]];
+    //return [[partes[0].trim(), partes[1].trim()]];
+  } else {
+    // Devolver un array vacío si no hay valores
+    return [];
+  }
+}
+
+////funcion de eliminar todo de una hoja///
+function funcionEliminarTodo() {
+    eliminarDatosDeHoja("Consejo 2024- ifno");
+    eliminarDatosDeHoja("Rosca de reyes DESPACHO - info");
+    eliminarDatosDeHoja("Regalos Navidad 2024- info");
+    eliminarDatosDeHoja("Organizar Evento Dia de Reyes 06 Enero 2024- info");
+    eliminarDatosDeHoja("Propuesta Detalle Cumpleaños mensual- info");
+}
+
+function eliminarDatosDeHoja(nombreHoja) {
+ // var hoja = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nombreHoja);
+  
+  // Obtener el rango de todas las celdas con datos en la hoja
+  var rango = hoja.getDataRange();
+  
+  // Limpiar el contenido del rango (eliminar todos los datos)
+  rango.clearContent();
+}
