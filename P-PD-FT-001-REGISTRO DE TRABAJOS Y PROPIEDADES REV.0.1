@@ -1,0 +1,134 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  var mensaje = "Recuerda que esto es una plantilla automatizada:"
+    + "\n- 🚫 No agregar o quitar columnas y filas."
+    + "\n- 🚫 No alterar fórmulas."
+    + "\n- 🚫 No modificar la posición de las tablas o el rango."
+    + "\n- 🔷 ASEGÚRATE DE LLENAR TODAS LAS COLUMNAS IDENTIFICADAS EN COLOR AZÚL"
+    + "\n- ✅ Para un uso adecuado del archivo consulta tu instrucción de trabajo P-PD-IT-001- REGISTRO DE TRABAJOS Y PROPIEDADES"
+    + "\n- ☎︎ Contacta a 'Optimización' para realizar modificaciones. V3";
+  
+  ui.alert(mensaje);
+}
+
+function onEdit(e) {
+  var celdaActiva = e.range;
+  var filaActiva = celdaActiva.getRow();
+  var hojaActiva = celdaActiva.getSheet();
+
+  var colDeseadaF = 4; // columna F 4
+  var colDeseadaG = 7; // columna G
+  var filaNodeseada = 1;
+
+
+  var hojaDeseada = "PENDIENTES GRALES"; // cambie el nombre a la hoja que desee
+
+  if (hojaActiva.getName() == hojaDeseada && filaActiva != filaNodeseada) {
+    if (celdaActiva.getColumn() == colDeseadaF) {
+      var email = Session.getActiveUser().getEmail();
+      var targetSheet = hojaActiva.getParent().getSheetByName(hojaDeseada);
+      targetSheet.getRange(filaActiva, 2).setValue(email); // insertar el correo en la columna J de la fila activa
+    } else if (celdaActiva.getColumn() == colDeseadaG) {
+      var valorCeldaG = celdaActiva.getValue();
+      if (valorCeldaG.toLowerCase() == "listo") {
+        var email = Session.getActiveUser().getEmail();
+        var targetSheet = hojaActiva.getParent().getSheetByName(hojaDeseada);
+        targetSheet.getRange(filaActiva, 11).setValue(email); // insertar el correo en la columna K de la fila activa
+      }
+    }
+  }
+}
+
+function funciones(){
+  eliminarProteccionesDeHoja();
+  bloqueoColumnasAL();
+}
+
+function eliminarProteccionesDeHoja() { //esta
+  // Obtiene el libro de trabajo actual
+  var hojaCalculo = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Especifica el nombre de la hoja que quieres modificar
+  var nombreHoja = 'PENDIENTES GRALES';
+
+  // Obtiene la hoja con el nombre especificado
+  var hoja = hojaCalculo.getSheetByName(nombreHoja);
+
+  if (hoja) {
+    // Obtiene todas las protecciones en la hoja
+    var protecciones = hoja.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+
+    // Elimina cada protección de rango
+    for (var i = 0; i < protecciones.length; i++) {
+      protecciones[i].remove();
+    }
+
+    // También se pueden eliminar protecciones a nivel de hoja
+    var proteccionHoja = hoja.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+    for (var j = 0; j < proteccionHoja.length; j++) {
+      proteccionHoja[j].remove();
+    }
+
+    Logger.log('Todas las protecciones de la hoja "' + nombreHoja + '" han sido eliminadas.');
+  } else {
+    Logger.log('La hoja "' + nombreHoja + '" no existe.');
+  }
+}
+
+function bloqueoColumnasAL() {
+  var hojaActiva = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var nombrehojadeseada = "PENDIENTES GRALES";
+  
+  var columnaBusqueda = 1;  // Cambia este valor si deseas buscar en otra columna
+  var datos = hojaActiva.getRange(1, columnaBusqueda, hojaActiva.getMaxRows(), 1).getValues();
+  var ultimaFila = 0;
+  
+  // Encuentra la última fila con datos en la columna especificada
+  for (var i = datos.length - 1; i >= 0; i--) {
+    if (datos[i][0] !== "") {
+      ultimaFila = i + 1;
+      break;
+    }
+  }
+
+  var rangosABloquear = [
+    { startCol: 1, endCol: 16 },  // A-P
+    { startCol: 23, endCol:  29 } //W-AC
+  ];
+
+
+  // Verificar si la hoja activa es la deseada
+  if (hojaActiva.getName() == nombrehojadeseada) {
+    // Iterar sobre cada rango y bloquear las columnas
+    rangosABloquear.forEach(function (rango) {
+      var startCol = rango.startCol;
+      var endCol = rango.endCol;
+
+      // Encontrar la última fila con datos en el rango de columnas
+      var startRow = columnaBusqueda;
+      var endRow = encontrarUltimaFilaConDatosEnRango(hojaActiva, startRow, ultimaFila,startCol, endCol);
+
+      // Bloquear el rango especificado
+      var rangeToProtect = hojaActiva.getRange(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
+      var protection = rangeToProtect.protect().setDescription('Bloquear filas con datos');
+
+      //Definir quieres pueden definir las filas bloquedas
+      var editores = protection.getEditors();
+      protection.removeEditors(editores);
+    });
+  }
+  Logger.log('Todas las protecciones de la hoja "' + nombrehojadeseada + '" han sido protegida.');
+}
+
+function encontrarUltimaFilaConDatosEnRango(hoja, startRow, endRow, startCol, endCol) {
+  var data = hoja.getRange(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1).getValues();
+  for (var i = data.length - 1; i >= 0; i--) {
+    for (var j = 0; j < data[i].length; j++) {
+      if (data[i][j] != "") {
+        return i + startRow;
+      }
+    }
+  }
+  return startRow; // Devuelve startRow si no se encontraron datos
+}//funciona v3
+
