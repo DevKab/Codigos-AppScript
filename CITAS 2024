@@ -1,0 +1,73 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  var mensaje = "Recuerda que esto es una plantilla automatizada:"
+    + "\n- 🚫 No agregar o quitar columnas y filas."
+    + "\n- 🚫 No alterar fórmulas."
+    + "\n- 🚫 No modificar la posición de las tablas o el rango."
+    + "\n- 🔷 ASEGÚRATE DE LLENAR TODAS LAS COLUMNAS IDENTIFICADAS EN COLOR AZÚL"
+    + "\n- ✅ Para un uso adecuado del archivo consulta tu instrucción de trabajo -"
+    + "\n- ☎︎ Contacta a 'Optimización' para realizar modificaciones. V1";
+  
+    ui.alert(mensaje);
+  
+  ui.createMenu('🗓 | Citas')
+    .addItem('Base de Datos', 'procesarFilasV1')
+    .addToUi();
+}
+
+function onEdit(e) { //modificacion, se quito formato de fecha 17/07/2024 hrs:11:21
+  var hojaOrigen = e.source.getActiveSheet();
+  var filaActiva = e.range.getRow();
+  var columnaActiva = e.range.getColumn();
+
+  var hojaDestino = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('BASE DATOS');
+  var columnaN = 14; // La columna N es la columna 14
+  var columnaM = 13; // La columna M es la columna 13
+  var columnaL = 12; // La columna L es la columna 12
+
+  // Verificar si la columna editada es la columna N
+  if (columnaActiva == columnaN && hojaOrigen.getName() == 'CITAS') {
+    var valorColumnaN = e.range.getValue();
+    var valoresFila = hojaOrigen.getRange(filaActiva, 1, 1, 20).getValues()[0]; // Obtener valores desde la columna A hasta la T (1 a 20)
+
+    // Formatear las fechas en las columnas K a M
+    for (var col = 11; col <= 13; col++) { // Columnas K (11) a M (13)
+      var fecha = valoresFila[col - 1];
+      if (fecha instanceof Date) {
+        valoresFila[col - 1] = formatearFechaEspanol(fecha);
+      }
+    }
+
+    if (valorColumnaN === "AGENDADO" || valorColumnaN === "CANCELADO" || valorColumnaN === "RE AGENDADO") {
+      hojaDestino.appendRow(valoresFila);
+      hojaOrigen.getRange(filaActiva, columnaM, 1, 8).clearContent(); // Borra desde M hasta T (8 columnas)
+
+      // Desactivar temporalmente la validación de datos en la columna N
+      var rule = hojaOrigen.getRange(filaActiva, columnaN).getDataValidation();
+      hojaOrigen.getRange(filaActiva, columnaN).clearDataValidations();
+
+      // Cambiar el valor de la columna N a "POR CONFIRMAR"
+      hojaOrigen.getRange(filaActiva, columnaN).setValue("POR CONFIRMAR");
+
+      // Restaurar la validación de datos
+      hojaOrigen.getRange(filaActiva, columnaN).setDataValidation(rule);
+
+    } else if (valorColumnaN === "REALIZADO") {
+      hojaDestino.appendRow(valoresFila);
+      var valorColumnaM = hojaOrigen.getRange(filaActiva, columnaM).getValue();
+      hojaOrigen.getRange(filaActiva, columnaL).setValue(valorColumnaM); // Copia de columna M a L
+      hojaOrigen.getRange(filaActiva, columnaM, 1, 8).clearContent(); // Borra desde M hasta T (8 columnas)
+
+      // Desactivar temporalmente la validación de datos en la columna N
+      var rule = hojaOrigen.getRange(filaActiva, columnaN).getDataValidation();
+      hojaOrigen.getRange(filaActiva, columnaN).clearDataValidations();
+
+      // Cambiar el valor de la columna N a "POR CONFIRMAR"
+      hojaOrigen.getRange(filaActiva, columnaN).setValue("POR CONFIRMAR");
+
+      // Restaurar la validación de datos
+      hojaOrigen.getRange(filaActiva, columnaN).setDataValidation(rule);
+
+    } 
+  }
+}
