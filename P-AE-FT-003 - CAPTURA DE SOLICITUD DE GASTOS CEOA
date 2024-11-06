@@ -1,0 +1,126 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  var mensaje = "Recuerda que esta plantilla contiene listas anidadas y recibe información de otros archivos:"
+    + "\n- 🚫 No agregar o quitar columnas y filas."
+    + "\n- 🚫 No alterar fórmulas."
+    + "\n- 🚫 No modificar la posición de las tablas o el rango."
+    + "\n- 🔷 ASEGÚRATE DE LLENAR TODAS LAS COLUMNAS IDENTIFICADAS EN COLOR AZÚL"
+    + "\n- ✅ Para un uso adecuado del archivo consulta tu instrucción de trabajo P-AE-IT-007_ SOLICITUD DE GASTOS CEOA"
+    + "\n- ☎︎ Contacta a 'Optimización' para realizar modificaciones. V4";
+  
+  ui.alert(mensaje);
+}
+
+function allFunciones(){
+  moverHojaSOLICITUDESADestino();
+  eliminarCONCENTRADO();
+  copiadoCONSENTRADO();
+  moverColumnaXSiCondicionesCumplidas();
+  eliminarNuevaSOLICITUDES2024();
+}
+
+function moverHojaSOLICITUDESADestino() { //mueve la hoja == este funciona. == 25/07/2024 
+  var hojaOrigenNombre = 'SOLICITUDES 2024'; // Nombre de la hoja que deseas mover
+  var libroDestinoId = '1M_kZkawlblxtMYLMhWtE3uenmQthCpjI8VCCdRldUSc'; // ID del libro de destino
+  var nuevoNombreHojaDestino = 'Nueva SOLICITUDES 2024'; // Nuevo nombre para la hoja en el libro de destino
+
+  // Obtener la hoja de origen
+  var hojaOrigen = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(hojaOrigenNombre);
+  if (!hojaOrigen) {
+    Logger.log('No se encontró la hoja con el nombre: ' + hojaOrigenNombre);
+    return;
+  }
+
+  // Abrir el libro de destino
+  var libroDestino = SpreadsheetApp.openById(libroDestinoId);
+
+  // Eliminar la hoja existente con el nuevo nombre en el libro de destino si existe
+  var hojaDestinoExistente = libroDestino.getSheetByName(nuevoNombreHojaDestino);
+  if (hojaDestinoExistente) {
+    libroDestino.deleteSheet(hojaDestinoExistente);
+  }
+
+  // Copiar la hoja al libro de destino
+  var hojaNueva = hojaOrigen.copyTo(libroDestino);
+  hojaNueva.setName(nuevoNombreHojaDestino);
+  
+}
+
+function eliminarCONCENTRADO() { //MODIFICAR 04/09/2024
+  var libroDestino = SpreadsheetApp.openById('1M_kZkawlblxtMYLMhWtE3uenmQthCpjI8VCCdRldUSc');
+  var hoja = libroDestino.getSheetByName('CONCENTRADO');  
+  var ultimaFila = hoja.getLastRow();
+
+  // Borrar el contenido de las filas desde la fila 2 hasta la última fila
+  hoja.getRange('A2:AL' + ultimaFila).clearContent();
+
+  Logger.log("Se eliminaron los datos desde la fila 2 hasta la fila " + ultimaFila);
+}
+
+function copiadoCONSENTRADO() {//FUNCIONA
+  var libroDestino = SpreadsheetApp.openById('1M_kZkawlblxtMYLMhWtE3uenmQthCpjI8VCCdRldUSc');
+  var hojaDestino = libroDestino.getSheetByName('CONCENTRADO');
+  var hojaOrigen = libroDestino.getSheetByName('Nueva SOLICITUDES 2024');
+
+  // Inicializar variables para la recopilación de datos
+  var filaInicio = 3; // Fila de inicio para copiar y pegar
+
+  // Obtener todas las filas de la hoja de origen
+  var lastRow = hojaOrigen.getLastRow();
+  var allDataAW = hojaOrigen.getRange(filaInicio, 2, lastRow - filaInicio + 1, 26).getValues(); // Columnas A a AA
+  var allDataYAI = hojaOrigen.getRange(filaInicio, 29, lastRow - filaInicio + 1, 11).getValues(); // Columnas Y a AC
+
+  // Pegar los datos en la hoja de destino, comenzando desde la fila 3
+  hojaDestino.getRange(2, 1, allDataAW.length, allDataAW[0].length).setValues(allDataAW);
+  hojaDestino.getRange(2, 28, allDataYAI.length, allDataYAI[0].length).setValues(allDataYAI);
+
+  Logger.log('Proceso completado.');
+}
+
+function moverColumnaXSiCondicionesCumplidas() { //MODIFIQUE 04/09/2024
+  var libroDestino = SpreadsheetApp.openById('1M_kZkawlblxtMYLMhWtE3uenmQthCpjI8VCCdRldUSc');
+  var hojaDestino = libroDestino.getSheetByName('CONCENTRADO');
+  var hojaOrigen = libroDestino.getSheetByName('Nueva SOLICITUDES 2024');
+
+  if (!hojaOrigen || !hojaDestino) {
+    Logger.log('No se encontró la hoja de origen o la hoja de destino.');
+    return;
+  }
+  
+  var lastRowDestino = hojaDestino.getLastRow();
+  var lastRowOrigen = hojaOrigen.getLastRow();
+
+  var valoresColumnaA = hojaDestino.getRange(1, 1, lastRowDestino, 1).getValues();
+  var valoresColumnaXDestino = hojaDestino.getRange(1, 27, lastRowDestino, 1).getValues();
+
+  for (var i = 0; i < lastRowDestino; i++) {
+    if (valoresColumnaA[i][0] !== '' && valoresColumnaXDestino[i][0] === '') {
+      var filaOrigen = i + 2; // Ajuste para alineación con hoja origen
+
+      if (filaOrigen <= lastRowOrigen) {
+        var celdaOrigen = hojaOrigen.getRange('AB' + filaOrigen);
+        var celdaDestino = hojaDestino.getRange('AA' + (i + 1));
+        celdaOrigen.copyTo(celdaDestino, SpreadsheetApp.CopyPasteType.PASTE_NORMAL, false);
+      } else {
+        Logger.log('Fila de origen fuera de rango: ' + filaOrigen);
+      }
+    }
+  }
+
+  Logger.log('Proceso completado.');
+}
+
+function eliminarNuevaSOLICITUDES2024(){
+  //var hojaOrigenNombre = 'SOLICITUDES 2024'; // Nombre de la hoja que deseas mover
+  var libroDestinoId = '1M_kZkawlblxtMYLMhWtE3uenmQthCpjI8VCCdRldUSc'; // ID del libro de destino
+  var nuevoNombreHojaDestino = 'Nueva SOLICITUDES 2024'; // Nuevo nombre para la hoja en el libro de destino
+
+   // Abrir el libro de destino
+  var libroDestino = SpreadsheetApp.openById(libroDestinoId);
+
+  // Eliminar la hoja existente con el nuevo nombre en el libro de destino si existe
+  var hojaDestinoExistente = libroDestino.getSheetByName(nuevoNombreHojaDestino);
+  if (hojaDestinoExistente) {
+    libroDestino.deleteSheet(hojaDestinoExistente);
+  }
+}
