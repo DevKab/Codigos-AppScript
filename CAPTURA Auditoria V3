@@ -1,0 +1,607 @@
+function onOpen() { /*M. Anahy Aguilar Gonzalez*/
+  var ui = SpreadsheetApp.getUi();
+  var menu = ui.createMenu("INFORME");
+  menu.addItem("Generar Accion Correctiva uno a uno", "metodos")
+      .addToUi();
+}
+
+function metodos(){
+  generarPDFIndividual();
+  //onButtonClick();
+  crearPDFHoja2();
+
+  //borrado 
+  borrarText1(); 
+  borrado2();
+  borrado2hasta5();
+}
+
+//variables glovales = Configuracion
+  var colAuditoria = 2; //columna B //rango H6:K6
+  var colFecha = 3; //col C //rango X6:AF6
+
+  /*true y false */
+  var colSegui = 4; /*col D //rango C10*/                 var colGestion = 9; /*col I //rango M10 */             var colOtroPV = 14; //col N //rango Z10
+  var colInve = 5; /*Col E //rango C11*/                  var colGeLog = 10; /*col J //rango M11*/               var colOtroTex = 15; //col O //rango AA11:AF14
+  var colMejo = 6; /*Col F //rango C12*/                  var colGeDoc = 11; //col K //rango M12
+  var colLanza = 7; /*Col G rango C13*/                   var colGeRel = 12; //col L //rango M13
+  var colEje = 8; /*col H rango C14*/                     var colGeMan = 13; //col M //rango M14
+
+  
+  
+  /*fechas */
+  var colFechaAper = 16; /*Col P  RANGO I17:L17*/      var colFechaCierre = 17; /*col Q RANGO R17:V17*/    var colFechaSegui = 18; //col R RANGO AB17:AF17
+  
+
+/*5. NOMBRE Y FIRMA DE EQUIPO AUDITOR */
+  var colAuditor = 19; //col S RANGO I19:L22 
+  var colPueAL = 20;// col T RANGO L76:P76
+
+  var colAudi1 = 21; //col U RANGO R19:AC19 
+  var colPueA1 = 22; //col V RANGO L77:P77
+
+  var colAd2 = 23; //col W RANGO R20:AC20 
+  var colPueA2 = 24; //col X RANGO L78:P78
+  
+  var colAd3 = 25; //col Y RANGO R21:AC21
+  var colPueA3 = 26; //col Z RANGO L79:P79
+
+  var colDept = 27; //col AA rango  C27:H28
+
+/*4. NOMBRE Y FIRMA DE CONFORMIDAD */
+  var colDir = 28; //col AB  nombre rango I25:Q25 
+  var colPueD = 29; //col AC puesto rango R25:AC25
+  var colIdDer = 30; //col AD Id rango AD25:AF25
+
+  var colLider = 31; //col AE nombre rango I26:Q26 
+  var colPuesL = 32; //col  AF puesto rango R26:AC26 
+  var colIdL = 33; //col AG Id rango AD26:AF26 
+
+  var colLiSt = 34; //col AH nombre rango I27:Q27 
+  var colPusLof = 35; //col AL puesto rango R27:AC27
+  var colIdLiLof = 36; //col AJ Id rango AD27:AF27
+
+  var colStaff = 37; //col AK  nombre rango I28:Q28 
+  var colPuestoS = 38; //col AL puesto rango R28:AC28
+  var colIdStaff = 39; //col AM Id rango AD28:AF28
+
+  var colObjA = 40; //col AN rango I29:AF29
+
+  /*por busqueda == modificar diferente */
+  var colConcAud = 41; //col AO rango B50:AF50
+  var colConcCier = 42; //col AP rango B52:AF52
+  var colFort = 43; //col AQ rango B56:V58
+  var colForCauRaiz = 44; //col AR rango B60:V63
+  var colAreaProcRaiz = 45; //col AS rango W60:AF63
+  var colAreaProc = 46; //col AT rango W56:AF58*/
+/**/
+
+function generarPDFIndividual(){
+   onButtonClick();
+  var hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datos Generales");
+  var filaActiva = SpreadsheetApp.getActiveRange().getRow();
+  var datos = {}
+      datos.carNoID = hoja.getRange(filaActiva, colAuditoria).getValue();
+      datos.fecha = hoja.getRange(filaActiva, colFecha).getDisplayValue();
+
+      datos.segui = hoja.getRange(filaActiva, colSegui).getValue();
+      datos.inve = hoja.getRange(filaActiva, colInve).getValue();
+      datos.mejo = hoja.getRange(filaActiva, colMejo).getValue();
+      datos.lanza = hoja.getRange(filaActiva, colLanza).getValue();
+      datos.eje = hoja.getRange(filaActiva, colEje).getValue();
+
+      datos.gention = hoja.getRange(filaActiva, colGestion).getValue();
+      datos.getLo = hoja.getRange(filaActiva, colGeLog).getValue();
+      datos.getDoc = hoja.getRange(filaActiva, colGeDoc).getValue();
+      datos.genRel = hoja.getRange(filaActiva, colGeRel).getValue();
+      datos.genMan = hoja.getRange(filaActiva, colGeMan).getValue();
+
+      datos.otroVp = hoja.getRange(filaActiva, colOtroPV).getValue();
+      datos.otroTex = hoja.getRange(filaActiva, colOtroTex).getValue();
+
+      datos.fechaAper = hoja.getRange(filaActiva, colFechaAper).getDisplayValue();
+      datos.fechaCierre = hoja.getRange(filaActiva, colFechaCierre).getDisplayValue();
+      datos.fechaSegui = hoja.getRange(filaActiva, colFechaSegui).getDisplayValue(); 
+
+  /*5. NOMBRE Y FIRMA DE EQUIPO AUDITOR */
+      datos.auditor = hoja.getRange(filaActiva, colAuditor).getValue();//aqui me quede
+      datos.pueAL = hoja.getRange(filaActiva, colPueAL).getValue();
+
+      datos.audi1 = hoja.getRange(filaActiva, colAudi1).getValue(); 
+      datos.pueA1 = hoja.getRange(filaActiva, colPueA1).getValue();
+
+      datos.audi2 = hoja.getRange(filaActiva, colAd2).getValue();
+      datos.pueA2 = hoja.getRange(filaActiva, colPueA2).getValue();
+
+      datos.audi3 = hoja.getRange(filaActiva, colAd3).getValue();
+      datos.pueA3 = hoja.getRange(filaActiva, colPueA3).getValue();
+
+      datos.dept = hoja.getRange(filaActiva, colDept).getValue(); 
+  //4-.
+      datos.dir = hoja.getRange(filaActiva, colDir).getValue();
+      datos.pueD = hoja.getRange(filaActiva, colPueD).getValue();
+      datos.idDer = hoja.getRange(filaActiva, colIdDer).getValue();
+      
+      datos.lider = hoja.getRange(filaActiva, colLider).getValue();
+      datos.puesL = hoja.getRange(filaActiva, colPuesL).getValue();
+      datos.idL = hoja.getRange(filaActiva, colIdL).getValue();
+
+      datos.liSt = hoja.getRange(filaActiva, colLiSt).getValue();
+      datos.pusLof = hoja.getRange(filaActiva, colPusLof).getValue();
+      datos.idLiLof = hoja.getRange(filaActiva, colIdLiLof).getValue();
+      
+      datos.staff = hoja.getRange(filaActiva, colStaff).getValue();
+      datos.puestoS = hoja.getRange(filaActiva, colPuestoS).getValue();
+      datos.idStaff = hoja.getRange(filaActiva, colIdStaff).getValue();
+      
+      datos.objA = hoja.getRange(filaActiva, colObjA).getValue(); 
+
+
+        /*METODOS NUEVOS PARA ESTAS VARIABLES */
+        datos.concAud = hoja.getRange(filaActiva, colConcAud).getValue();
+        datos.concCier = hoja.getRange(filaActiva, colConcCier).getValue();
+
+        datos.fort = hoja.getRange(filaActiva, colFort).getValue();
+        datos.forCauRaiz = hoja.getRange(filaActiva, colForCauRaiz).getValue();
+        datos.areaProcRaiz = hoja.getRange(filaActiva, colAreaProcRaiz).getValue();
+        datos.areaProc = hoja.getRange(filaActiva, colAreaProc).getValue();
+      
+
+      generarPDF(datos);
+     
+}
+
+function generarPDF(estudiante) { //modificar
+  //identificacion 
+  var libroDestino = SpreadsheetApp.openById("1CShKHe7yIFPWe7DmSacT3rUKQ_GB_IidmM0FNXcyiYQ");
+  var hojaDestino = libroDestino.getSheetByName("PLANTILLA ACTUALIZADA");
+
+  //copiar y pegar
+  hojaDestino.getRange('H6:K6').setValue(estudiante.carNoID);
+  hojaDestino.getRange('X6:AF6').setValue(estudiante.fecha);  
+
+  hojaDestino.getRange('C10').setValue(estudiante.segui);   
+  hojaDestino.getRange('C11').setValue(estudiante.inve);   
+  hojaDestino.getRange('C12').setValue(estudiante.mejo);   
+  hojaDestino.getRange('C13').setValue(estudiante.lanza);   
+  hojaDestino.getRange('C14').setValue(estudiante.eje); 
+
+  hojaDestino.getRange('M10').setValue(estudiante.gention);   
+  hojaDestino.getRange('M11').setValue(estudiante.getLo);   
+  hojaDestino.getRange('M12').setValue(estudiante.getDoc);   
+  hojaDestino.getRange('M13').setValue(estudiante.genRel);   
+  hojaDestino.getRange('M14').setValue(estudiante.genMan);   
+  
+  hojaDestino.getRange('Z10').setValue(estudiante.otroVp);   
+  hojaDestino.getRange('AA11:AF14').setValue(estudiante.otroTex);   
+
+  hojaDestino.getRange('I17:L17').setValue(estudiante.fechaAper);     
+  hojaDestino.getRange('R17:V17').setValue(estudiante.fechaCierre);   
+  hojaDestino.getRange('AB17:AF17').setValue(estudiante.fechaSegui);   
+
+/*5. NOMBRE Y FIRMA DE EQUIPO AUDITOR */
+  hojaDestino.getRange('I19:L22').setValue(estudiante.auditor);    
+
+  hojaDestino.getRange('R19:AC19').setValue(estudiante.audi1);
+  
+  hojaDestino.getRange('R20:AC20').setValue(estudiante.audi2);
+  
+  hojaDestino.getRange('R21:AC21').setValue(estudiante.audi3);
+
+  hojaDestino.getRange('C27:H28').setValue(estudiante.dept);
+
+/*4. NOMBRE Y FIRMA DE CONFORMIDAD */ 
+  hojaDestino.getRange('I25:Q25').setValue(estudiante.dir);
+  hojaDestino.getRange('R25:AC25').setValue(estudiante.pueD);
+  hojaDestino.getRange('AD25:AF25').setValue(estudiante.idDer);
+  
+  hojaDestino.getRange('I26:Q26').setValue(estudiante.lider);
+  hojaDestino.getRange('R26:AC26').setValue(estudiante.puesL);
+  hojaDestino.getRange('AD26:AF26').setValue(estudiante.idL);
+ 
+  hojaDestino.getRange('I27:Q27').setValue(estudiante.liSt);
+  hojaDestino.getRange('R27:AC27').setValue(estudiante.pusLof);
+  hojaDestino.getRange('AD27:AF27').setValue(estudiante.idLiLof);
+  
+  hojaDestino.getRange('I28:Q28').setValue(estudiante.staff);
+  hojaDestino.getRange('R28:AC28').setValue(estudiante.puestoS);
+  hojaDestino.getRange('AD28:AF28').setValue(estudiante.idStaff);
+  
+  hojaDestino.getRange('I29:AF29').setValue(estudiante.objA);
+  
+/* POR BUSQUEDA*/
+  metodo2("B:AF", '2.2', 'CONCLUSIONES AUDITORÍA', hojaDestino, estudiante.concAud);
+  metodo2("B:AF", '2.2.1', 'CONCLUSIONES CIERRE', hojaDestino, estudiante.concCier);
+
+  fortalezasAreas("3. FORTALEZAS", estudiante.fort, estudiante.areaProc, hojaDestino);
+  fortalezasAreas("3.1 FORTALEZAS ANALISIS DE CAUSA RAIZ", estudiante.forCauRaiz, estudiante.areaProcRaiz, hojaDestino);
+  
+  
+  nombreFirUniversal45( "4. NOMBRE Y FIRMA DE CONFORMIDAD", hojaDestino, estudiante.dir, estudiante.pueD); //dir director
+  nombreFirUniversal45( "4. NOMBRE Y FIRMA DE CONFORMIDAD", hojaDestino, estudiante.lider, estudiante.puesL);
+  nombreFirUniversal45( "4. NOMBRE Y FIRMA DE CONFORMIDAD", hojaDestino, estudiante.liSt, estudiante.pusLof);
+  nombreFirUniversal45( "4. NOMBRE Y FIRMA DE CONFORMIDAD", hojaDestino, estudiante.staff, estudiante.puestoS);
+  
+  nombreFirUniversal45( "5. NOMBRE Y FIRMA DE EQUIPO AUDITOR", hojaDestino, estudiante.audi1, estudiante.pueA1);
+  nombreFirUniversal45( "5. NOMBRE Y FIRMA DE EQUIPO AUDITOR", hojaDestino, estudiante.audi2, estudiante.pueA2);
+  nombreFirUniversal45( "5. NOMBRE Y FIRMA DE EQUIPO AUDITOR", hojaDestino, estudiante.audi3, estudiante.pueA3);
+}
+
+function metodo2( rango, identificador, cadenaVariable, hojaDestino, estudiante){ //funciona 22/08/2024
+  var valorColumnasVa = hojaDestino.getRange(rango).getValues();
+  for (var i = 0; i < valorColumnasVa.length; i++) {
+      var valorCelda = valorColumnasVa[i][0];
+
+      // Verificar si valorCelda es una cadena de texto y no está vacía
+      if (typeof valorCelda === 'string' && valorCelda !== "") {
+          var cadena = valorCelda;
+          var parte = cadena.split(identificador);
+
+          // Verificar si la división fue exitosa y si la celda contiene 'CONCLUSIONES AUDITORÍA'
+          if (parte.length > 1 && parte[1].trim() === cadenaVariable) {
+              // Ubicar la fila siguiente
+              var filaDestino = i + 2; // i+1 sería la misma fila, así que +2 es la fila siguiente
+
+              // Pegar el valor de estudiante.concAud en la primera columna de la fila siguiente
+              hojaDestino.getRange(filaDestino, 2).setValue(estudiante); // Columna B es la columna 2
+              break; // Detener el bucle después de encontrar la coincidencia
+          }
+      }
+  }
+}
+
+function fortalezasAreas(identificador, estudianteFort, estudianteAreaProc, hojaDestino) {//ya sale ; 23/08/2024
+  
+  // Obtener todos los datos de la hoja
+  var dataRange = hojaDestino.getRange("B:AF"); // Ajuste para la fila de inicio correcta  == 30, 2, lastRow, 32
+  var dataValues = dataRange.getValues();
+
+  // Buscar la fila y columna de "3. FORTALEZAS" y "ÁREA O PROCESO"
+  var filaEncontrada = dataValues.findIndex((fila) => {
+    var columnaFortaleza = fila.indexOf(identificador);
+    var columnaAreaProceso = fila.slice(21, 32).indexOf("ÁREA O PROCESO"); // Columnas W:AF
+
+    // Si ambas posiciones se encuentran en la misma fila, devolver el índice de la fila
+    return columnaFortaleza > -1 && columnaAreaProceso > -1;
+  });
+
+  // Si se encontró una fila, devolver el número de fila ajustado y realizar la actualización
+  if (filaEncontrada > -1) {
+    var filaReal = filaEncontrada + 2; // Ajuste para el índice de fila en la hoja de cálculo
+    Logger.log('Fila encontrada: ' + filaReal);
+
+    // Pegar los valores en las posiciones correspondientes
+    var columnaFortaleza = dataValues[filaEncontrada].indexOf(identificador) + 2; // Columna B es el índice 2
+    var columnaAreaProceso = dataValues[filaEncontrada].indexOf("ÁREA O PROCESO") + 2; // Mapea desde la columna W
+    Logger.log('columnaAreaProceso ' +columnaFortaleza);
+    Logger.log('columnaAreaProceso ' +columnaAreaProceso);
+
+    hojaDestino.getRange(filaReal, columnaFortaleza).setValue(estudianteFort);
+    hojaDestino.getRange(filaReal, columnaAreaProceso).setValue(estudianteAreaProc);
+  }
+}
+
+function nombreFirUniversal45(identificador, hojaDestino, nombre, puesto) {
+  // Obtener todos los datos de la hoja
+  var dataRange = hojaDestino.getRange("B:AF"); // Rango para buscar
+  var dataValues = dataRange.getValues();
+
+  // Buscar la fila que contiene el identificador especificado
+  var filaConformidad = -1;
+
+  for (var i = 0; i < dataValues.length; i++) {
+    if (dataValues[i].indexOf(identificador) > -1) {
+      filaConformidad = i;
+      break;
+    }
+  }
+
+  if (filaConformidad === -1) {
+    Logger.log('No se encontró "' + identificador + '".');
+    return;
+  }
+
+  Logger.log('Fila encontrada para "' + identificador + '": ' + (filaConformidad + 1));
+
+  // Buscar las columnas "NOMBRE" y "PUESTO" debajo de la fila encontrada
+  var filaInicioBusqueda = filaConformidad + 2; // Comienza justo debajo de la fila que contiene el identificador
+  var columnaNombre = -1;
+  var columnaPuesto = -1;
+
+  // Buscar las columnas "NOMBRE" y "PUESTO" en la fila filaInicioBusqueda o la siguiente fila si no se encuentran
+  for (var j = 0; j < dataValues[filaInicioBusqueda].length; j++) {
+    if (dataValues[filaInicioBusqueda][j] === "NOMBRE") {
+      columnaNombre = j + 2; // Ajuste para la hoja de cálculo (columna "B" es la 2)
+    }
+    if (dataValues[filaInicioBusqueda][j] === "PUESTO") {
+      columnaPuesto = j + 2; // Ajuste para la hoja de cálculo
+    }
+  }
+
+  if (columnaNombre === -1 || columnaPuesto === -1) {
+    Logger.log('No se encontraron las columnas "NOMBRE" y "PUESTO" debajo de "' + identificador + '".');
+    return;
+  }
+
+  Logger.log('Columna de "NOMBRE": ' + (columnaNombre + 1));
+  Logger.log('Columna de "PUESTO": ' + (columnaPuesto + 1));
+
+  // Pegar los valores en la primera fila vacía debajo de "NOMBRE" y "PUESTO"
+  var filaPegar = -1;
+  for (var k = filaInicioBusqueda + 1; k < dataValues.length; k++) {
+    var valorNombre = dataValues[k][columnaNombre - 2]; // Ajuste índice para dataValues
+    var valorPuesto = dataValues[k][columnaPuesto - 2]; // Ajuste índice para dataValues
+    
+    if (!valorNombre && !valorPuesto) { // Verifica si ambas celdas están vacías
+      filaPegar = k + 1; // Ajuste para el índice de fila en hoja de cálculo
+      break;
+    }
+  }
+
+  if (filaPegar > -1) {
+    hojaDestino.getRange(filaPegar, columnaNombre).setValue(nombre); // Pegar nombre
+    hojaDestino.getRange(filaPegar, columnaPuesto).setValue(puesto); // Pegar puesto
+    Logger.log('Datos pegados en la fila: ' + filaPegar);
+  } else {
+    Logger.log('No se encontró ninguna fila vacía para pegar los datos debajo de "' + identificador + '".');
+  }
+}
+
+// 2.
+function onButtonClick() {//ESTE ES LA FUNCION QUE ENCUENTRA: 2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD
+  // Obtener la hoja activa y la fila activa
+  var hojaActiva = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var filaActiva = hojaActiva.getActiveRange().getRow();
+  
+  // Verificar si la hoja activa es "Datos Generales"
+  if (hojaActiva.getName() !== "Datos Generales") {
+    Logger.log("Este script solo funciona en la hoja 'Datos Generales'.");
+    return;
+  }
+
+  // Obtener el valor en la columna B de la fila activa
+  var valorBusqueda = hojaActiva.getRange(filaActiva, 2).getValue();
+  
+  // Asegurarse de que el valor de búsqueda no esté vacío
+  if (!valorBusqueda) {
+    Logger.log("La celda en la columna B de la fila activa está vacía.");
+    return;
+  }
+  
+  // Obtener la hoja "Hallazgos"
+  var hojaHallazgos = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Hallazgos");
+  if (!hojaHallazgos) {
+    Logger.log("No se pudo encontrar la hoja 'Hallazgos'.");
+    return;
+  }
+  
+  // Obtener los datos de la hoja "Hallazgos"
+  var dataHallazgos = hojaHallazgos.getDataRange().getValues();
+  
+  // Filtrar las filas que coinciden con el valor de búsqueda en la columna A
+  var filasCoincidentes = dataHallazgos.filter(function(fila) {
+    return fila[0] === valorBusqueda;
+  });
+  
+  if (filasCoincidentes.length === 0) {
+    Logger.log("No se encontraron filas coincidentes en la hoja 'Hallazgos'.");
+    return;
+  }
+  
+  // Abrir el documento destino y obtener la hoja "PLANTILLA ACTUALIZADA"
+  var libroDestino = SpreadsheetApp.openById("1CShKHe7yIFPWe7DmSacT3rUKQ_GB_IidmM0FNXcyiYQ"); // Reemplaza con el ID de tu documento de destino
+  var hojaDestino = libroDestino.getSheetByName("PLANTILLA ACTUALIZADA");
+  if (!hojaDestino) {
+    Logger.log("No se pudo encontrar la hoja 'PLANTILLA ACTUALIZADA' en el documento destino.");
+    return;
+  }
+  
+  // Buscar la cadena "2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD" en la hoja destino
+  var dataDestino = hojaDestino.getRange('B:AF').getValues();
+  var filaResultado = -1;
+  
+  for (var i = 0; i < dataDestino.length; i++) {
+    if (dataDestino[i].indexOf("2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD") > -1) {
+      filaResultado = i;
+      break;
+    }
+  }
+  
+  if (filaResultado === -1) {
+    Logger.log('No se encontró "2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD" en la hoja destino.');
+    return;
+  }
+
+  // Identificar las columnas donde se pegarán los datos
+  var filaInicioBusqueda = filaResultado + 4;
+  
+  // Comprobar si las filas encontradas superan el espacio disponible
+  var filasNecesarias = filasCoincidentes.length;
+  var filasDisponibles = dataDestino.length - filaInicioBusqueda - 1;
+
+  if (filasNecesarias > filasDisponibles) {
+    hojaDestino.insertRowsAfter(filaInicioBusqueda + 1, filasNecesarias - filasDisponibles);
+  }
+
+  // Pegar los datos en las columnas especificadas
+  for (var j = 0; j < filasCoincidentes.length; j++) {
+    hojaDestino.getRange(filaInicioBusqueda + 1 + j, 2).setValue(filasCoincidentes[j][2]); // Pegar "ID" en columna B
+    hojaDestino.getRange(filaInicioBusqueda + 1 + j, 4).setValue(filasCoincidentes[j][3]); // Pegar "DESCRIPCION DEL HALLAZGO Y CRITERIO DE AUDITORIA" en columna D
+    hojaDestino.getRange(filaInicioBusqueda + 1 + j, 17).setValue(filasCoincidentes[j][4]); // Pegar "NC" en columna Q
+    hojaDestino.getRange(filaInicioBusqueda + 1 + j, 21).setValue(filasCoincidentes[j][5]); // Pegar "OM" en columna U
+    hojaDestino.getRange(filaInicioBusqueda + 1 + j, 23).setValue(filasCoincidentes[j][6]); // Pegar "PROCESO" en columna W
+    hojaDestino.getRange(filaInicioBusqueda + 1 + j, 27).setValue(filasCoincidentes[j][7]); // Pegar "ESTATUS" en columna AA
+    //hojaDestino.getRange(filaInicioBusqueda + 1 + j, 28).setValue(filasCoincidentes[j][8]); // Pegar "SEVERIDAD" en columna AB
+   
+    // Obtener la celda de destino
+    var celdaDestino = hojaDestino.getRange(filaInicioBusqueda + 1 + j, 28);
+
+    // Pegar "SEVERIDAD" en columna AB
+    celdaDestino.setValue(filasCoincidentes[j][8]);
+
+    // Verificar el valor de "SEVERIDAD" y aplicar color de fondo correspondiente
+    var severidad = filasCoincidentes[j][8].trim(); // Asegurarse de eliminar espacios en blanco
+
+    if (severidad === 'A') {
+      celdaDestino.setBackground('#FF0000'); // Pinta la celda de rojo si es "A"
+    } else if (severidad === 'B') {
+      celdaDestino.setBackground('#FFFF00'); // Pinta la celda de amarillo si es "B"
+    } else if (severidad === 'C') {
+      celdaDestino.setBackground('#00FF00'); // Pinta la celda de verde si es "C"
+    }
+
+    // Aplicar formato de fuente "Montserrat" y tamaño 41
+    celdaDestino.setFontFamily('Montserrat');
+    celdaDestino.setFontSize(41);
+    celdaDestino.setHorizontalAlignment('center'); // Centra el texto horizontalmente
+    celdaDestino.setFontWeight('bold'); // Aplica negrita a la fuente
+  }
+
+  Logger.log('Datos copiados y pegados exitosamente.');
+}
+
+function crearPDFHoja2() {//convierte a PDF.
+  // Obtener el archivo de Google Sheets por su ID
+  var libroDestino = SpreadsheetApp.openById("1CShKHe7yIFPWe7DmSacT3rUKQ_GB_IidmM0FNXcyiYQ");
+  
+  // Obtener el PDF como blob (aquí, en lugar de convertir la hoja, convertimos el archivo entero)
+  var blob = libroDestino.getBlob().getAs("application/pdf");
+  
+  // Obtener la carpeta por su ID donde se guardará el PDF
+  var carpetaMaestra = DriveApp.getFolderById("1EwwM5ZyP5LnCyWe2bKhJk4gdV3N-K7pF");
+  
+  // Crear el archivo PDF en la carpeta
+  carpetaMaestra.createFile(blob.setName("PLANTILLA_ACTUALIZADA.pdf"));
+}
+
+
+///////////////////********************************** *///////////////////////
+///////////////////borrado///////////////////////////////
+function borrarText1(){//PRIMERA PARTE
+  var libroDestino = SpreadsheetApp.openById("1CShKHe7yIFPWe7DmSacT3rUKQ_GB_IidmM0FNXcyiYQ"); // Reemplaza con el ID de tu documento de destino
+  var hojaDestino = libroDestino.getSheetByName("PLANTILLA ACTUALIZADA");
+
+  // Definir los rangos a limpiar
+  var rangos = [
+    'H6:K6', 'X6:AF6',
+    'C10', 'C11', 'C12', 'C13', 'C14',
+    'M10', 'M11', 'M12', 'M13', 'M14', 'Z10',
+    'I17:L17', 'R17:V17', 'AB17:AF17', 
+    'I19:L22', 'R19:AF19', 'R20:AF20', 'R21:AF21', 'R22:AF22', 
+    'I25:AF25', 'I26:AF26', 'I27:AF27', 'I28:AF28', 'I29:AF29', 'C27:H28'
+  ];
+  
+  // Limpiar los rangos especificados
+  rangos.forEach(function(rango) {
+    hojaDestino.getRange(rango).clearContent();
+  });
+}
+
+function borrado2(){//elimina lo que es de 2.RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD
+  // Abrir el documento destino y obtener la hoja "PLANTILLA ACTUALIZADA"
+  var libroDestino = SpreadsheetApp.openById("1CShKHe7yIFPWe7DmSacT3rUKQ_GB_IidmM0FNXcyiYQ"); // Reemplaza con el ID de tu documento de destino
+  var hojaDestino = libroDestino.getSheetByName("PLANTILLA ACTUALIZADA");
+  
+  // Buscar la cadena "2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD" en la hoja destino
+  var dataDestino = hojaDestino.getRange('B:AF').getValues();
+  var filaResultado = -1;
+  
+  for (var i = 0; i < dataDestino.length; i++) {
+    if (dataDestino[i].indexOf("2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD") > -1) {
+      filaResultado = i;
+      break;
+    }
+  }
+
+  // Identificar la fila donde comenzará la eliminación de los datos
+  var filaInicioBusqueda = filaResultado + 4;
+  if(filaResultado > 0){
+    for(var k = filaInicioBusqueda; k < dataDestino.length; k++){
+      if(dataDestino[k][2] !== "" || dataDestino[k][3] !== "" || dataDestino[k][4] !== "" || dataDestino[k][5] !== "" || dataDestino[k][6] !== "" || dataDestino[k][8] !== ""){
+          hojaDestino.getRange(k + 1, 2).clearContent();
+          hojaDestino.getRange(k + 1, 4).clearContent();
+          hojaDestino.getRange(k + 1, 17).clearContent();
+          hojaDestino.getRange(k + 1, 21).clearContent();
+          hojaDestino.getRange(k + 1, 23).clearContent();
+          hojaDestino.getRange(k + 1, 27).clearContent();
+
+          
+          // Limpiar contenido y color de fondo en columna AB
+          hojaDestino.getRange(k + 1, 28).clearContent(); // Limpiar contenido en columna AB
+          hojaDestino.getRange(k + 1, 28).setBackground(null); // Eliminar color de fondo en
+        }
+    }
+  } else if(filaResultado > -1){
+    Logger("No se encontro '2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD' ");
+  }
+}
+
+function borrado2hasta5(){
+  onButtonClickBorradoConclusion("2.2 CONCLUSIONES AUDITORÍA");
+  onButtonClickBorradoConclusion("2.2.1 CONCLUSIONES CIERRE");
+  onButtonClickBorradoConclusion("3. FORTALEZAS");
+  onButtonClickBorradoConclusion("3.1 FORTALEZAS ANALISIS DE CAUSA RAIZ");
+  borrado4And5("4. NOMBRE Y FIRMA DE CONFORMIDAD");
+  borrado4And5("5. NOMBRE Y FIRMA DE EQUIPO AUDITOR");
+}
+
+function onButtonClickBorradoConclusion(variableBusqueda) {//2.2
+  // Abrir el documento destino y obtener la hoja "PLANTILLA ACTUALIZADA"
+  var libroDestino = SpreadsheetApp.openById("1CShKHe7yIFPWe7DmSacT3rUKQ_GB_IidmM0FNXcyiYQ"); // Reemplaza con el ID de tu documento de destino
+  var hojaDestino = libroDestino.getSheetByName("PLANTILLA ACTUALIZADA");
+  
+  // Buscar la cadena "2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD" en la hoja destino
+  var dataDestino = hojaDestino.getRange('B:AF').getValues();
+  var filaResultado = -1;
+  
+  for (var i = 0; i < dataDestino.length; i++) {
+    if (dataDestino[i].indexOf(variableBusqueda) > -1) {
+      filaResultado = i;
+      break;
+    }
+  }
+
+  // Identificar la fila donde comenzará la eliminación de los datos
+  var filaInicioBusqueda = filaResultado + 2;
+  if(filaResultado > 0){
+      hojaDestino.getRange(filaInicioBusqueda, 2).clearContent();
+      hojaDestino.getRange(filaInicioBusqueda, 23).clearContent();
+
+  }
+  else if(filaResultado > -1){
+    Logger("No se encontro 'Error no se encuentra el inf.' ");
+  }
+}
+
+function borrado4And5(variable) {//elimina lo que es de 2.RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD
+  // Abrir el documento destino y obtener la hoja "PLANTILLA ACTUALIZADA"
+  var libroDestino = SpreadsheetApp.openById("1CShKHe7yIFPWe7DmSacT3rUKQ_GB_IidmM0FNXcyiYQ"); // Reemplaza con el ID de tu documento de destino
+  var hojaDestino = libroDestino.getSheetByName("PLANTILLA ACTUALIZADA");
+  
+  // Buscar la cadena "2. RESULTADO DE LA AUDITORIA INTERNA DE LA CALIDAD" en la hoja destino
+  var dataDestino = hojaDestino.getRange('B:AF').getValues();
+  var filaResultado = -1;
+  
+  for (var i = 0; i < dataDestino.length; i++) {
+    if (dataDestino[i].indexOf(variable) > -1) {
+      filaResultado = i;
+      break;
+    }
+  }
+
+  // Identificar la fila donde comenzará la eliminación de los datos
+  if(filaResultado > 0){
+    var filaInicioBusqueda = filaResultado + 3;
+
+    for(var k = filaInicioBusqueda; k < dataDestino.length; k++){
+      if(dataDestino[k][0] !== "" || dataDestino[k][1] !== ""){
+          hojaDestino.getRange(k + 1, 3).clearContent();  // Limpiar columna C
+          hojaDestino.getRange(k + 1, 12).clearContent(); // Limpiar columna L
+        } else {
+          break; // Si ambas celdas están vacías, detiene el bucle
+        }
+    }
+  } else if(filaResultado > -1){
+    Logger("No se encontró la cadena: " + variable);
+  }
+}
