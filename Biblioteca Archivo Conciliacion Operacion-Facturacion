@@ -1,0 +1,184 @@
+// const FOLDER_ID = "11h92HeG5egXPXJ2kinKHeuOkn9PTsZ5M"; // FOLDER PRUEBA 2025
+// const CONCENTRADO_ID = "19ClyD5h-tP1oSFkWpbHUEvK4M9P04XGVCQayGfju15w"; // ARCHIVO PRUEBA CONCENTRADO VERDADEROS 2025
+// const FOLDER_ID = "1c4LCLmvT2rd7pX1DGgB9zuZN47qQmWIj"; // FOLDER MARZO 2025
+// const CONCENTRADO_ID = "15UjUCirVWB0ucqVhizvh_MyO7RzSOFROP0OCh8bsT50"; // ARCHIVO CONCENTRADO VERDADEROS MARZO 2025
+// const PROVISIONADAS_ID = "13yuUhAB_nxJpp4aetLYcJ2ypduwIRR7PLSPPO9a3pGY"; //  ARCHIVO CONCENTRADO PROVISIONADAS MARZO 2025
+// const FOLDER_ID = "1_3iaIrf4OxpFECiT6IM7h8x3riA_zV2B"; // FOLDER DIAS MAYO 2025
+// const CONCENTRADO_ID = "1S3j7HbYxuvvege_bXSMI_Sd7oJgxCnCM_wjQqJiGxe4"; // ARCHIVO CONCENTRADO VERDADEROS MAYO 2025
+// const FOLDER_ID = "1kJCD3pg3xsQcc0eoMndevKDzogIZKFW2"; // FOLDER DIAS JUNIO 2025
+// const CONCENTRADO_ID = "18GWCYp5ovoq4sZOrpNIyi7WSWGHJr9TNg701gjohQ94"; // ARCHIVO CONCENTRADO VERDADEROS JUNIO 2025
+const FOLDER_ID = "1fqycJX8niIYi0F2ALBhK8SN_2LNwwC8I"; // FOLDER DIAS JULIO 2025
+const CONCENTRADO_ID = "1dQCvt2y-N1X29jUc-IKr4hjym2-1vRLMwqqzCR4js3Y"; // ARCHIVO CONCENTRADO VERDADEROS JULIO 2025
+const PROVISIONADAS_ID = "1ECcbb4qJNGsffkB58U6ePKZOCEshc3b2aqhQBscpCKw"; //  ARCHIVO CONCENTRADO PROVISIONADAS  2025
+
+
+function enviarInfo() {
+    // Archivo Origen
+  var ssOrigen = SpreadsheetApp.getActiveSpreadsheet(); 
+  var sheetODF = ssOrigen.getSheetByName("DOCUMENTOS FACTURACION");
+    // Obtiene los datos de la hoja "DOCUMENTOS FACTURACION"
+  const lastRowDocs = sheetODF.getRange("A1").getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow();
+  var rangoDatosODF = sheetODF.getRange("A1:AE"+lastRowDocs).getValues(); 
+  var sheetOM = ssOrigen.getSheetByName("MOVS");
+  const lastRowMovs = sheetOM.getRange("A1").getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow();
+    // Obtiene los datos de la hoja "MOVS"
+  var rangoDatosOM = sheetOM.getRange("A1:V"+lastRowMovs).getValues(); 
+    // Verifica si hay registros para copiar
+  if (rangoDatosODF.length > 0 && rangoDatosOM.length > 0){ 
+    var tempVDF = [[]], tempVM = [[]], tempFDF = [[]], tempFM = [[]];
+      // Guarda encabezados 
+    tempVDF[0] = rangoDatosODF[0]; tempVM[0] = rangoDatosOM[0]; 
+    tempFDF[0] = rangoDatosODF[0]; tempFM[0] = rangoDatosOM[0];
+    for(i=1;i<rangoDatosODF.length;i++){
+           // Validacion en DOC FACT en columnas 'U' (20) y 'W' (22)
+      if(rangoDatosODF[i][20]!="PROVISIONADA" && rangoDatosODF[i][20]!="DOLARES" && rangoDatosODF[i][22]!="CANCELADA"){
+        if (rangoDatosODF[i][0] || rangoDatosODF[i+1][0]){
+           // Divide los registros de la hoja "DOCUMENTOS FACTURACION" (Columna 'Z' numero 25)
+         (rangoDatosODF[i][25]==true)?tempVDF.push(rangoDatosODF[i]):tempFDF.push(rangoDatosODF[i]); 
+        }else{break;} 
+      }
+    }
+    for(i=1;i<rangoDatosOM.length;i++){
+           // Validacion en MOVS en columnas 'N' (13) y 'P' (15)
+      if(rangoDatosOM[i][13]!="PROVISIONADA" && rangoDatosOM[i][13]!="DOLARES" && rangoDatosOM[i][15]!="CANCELADA"){
+        if (rangoDatosOM[i][0] || rangoDatosOM[i+1][0]) {
+           // Divide los registros de la hoja "MOVS" (Columna 'S' numero 18)
+          (rangoDatosOM[i][18]==true)?tempVM.push(rangoDatosOM[i]):tempFM.push(rangoDatosOM[i]); 
+        }else{break;} 
+      }
+    }
+      // Envia la Informacion al Archivo de Verdaderos
+    var ssV = SpreadsheetApp.openById(CONCENTRADO_ID); // Archivo Concentrado MAYO
+    var ssVDF = ssV.getSheetByName("DOCUMENTOS FACTURACION");
+    var ssVM = ssV.getSheetByName("MOVS");
+      // Crea el Archivo de Falsos
+    var ssF = ssOrigen.copy(ssOrigen.getName() + " - FALSOS");
+    var ssFDF = ssF.getSheetByName("DOCUMENTOS FACTURACION");
+    var ssFM = ssF.getSheetByName("MOVS");
+      // Inserta los datos
+    tempVDF.shift(); tempVM.shift();
+     // Verifica si hay informacion para mandar
+    if(tempVDF.length)ssVDF.getRange(ssVDF.getLastRow()+1,1,tempVDF.length,tempVDF[0].length).setValues(tempVDF); 
+    if(tempVM.length)ssVM.getRange(ssVM.getLastRow()+1,1,tempVM.length,tempVM[0].length).setValues(tempVM);
+    if(tempFDF.length)ssFDF.clear().getRange(1,1,tempFDF.length,tempFDF[0].length).setValues(tempFDF);
+    if(tempFM.length)ssFM.clearContents().getRange(1,1,tempFM.length,tempFM[0].length).setValues(tempFM);
+      // Inserta las formulas
+    for(a=0;a<(tempFDF.length-1);a++){
+      ssFDF.getRange(a+2, 18, 1, 2).setValues([[
+        `=IFERROR(
+          VLOOKUP(
+            $L`+(a+2)+`,
+            INFO!A:B,2,0
+          ),
+        "-")`,
+        `=IFERROR(
+          VLOOKUP(
+            $R`+(a+2)+`,
+            INFO!B:C,2,0
+          ),
+        "-")`
+      ]]);
+      ssFDF.getRange(a+2, 24, 1, 2).setValues([[
+        `=COUNTIFS(
+          MOVS!$I:$I,$B`+(a+2)+`,
+          MOVS!$E:$E,$R`+(a+2)+`,
+          MOVS!$B:$B,$S`+(a+2)+`,
+          MOVS!$L:$L,FILTER(
+            MOVS!$L:$L,
+            MOVS!$I:$I = $B`+(a+2)+`,
+            MOVS!$E:$E = $R`+(a+2)+`,
+            MOVS!$B:$B = $S`+(a+2)+`,
+            MOVS!$L:$L >= $F`+(a+2)+` - 0.99,
+            MOVS!$L:$L <= $F`+(a+2)+` + 0.99
+          )
+        )`,
+        `=COUNTIFS(
+          MOVS!$I:$I,$B`+(a+2)+`,
+          MOVS!$E:$E,$R`+(a+2)+`,
+          MOVS!$B:$B,$S`+(a+2)+`,
+          MOVS!$L:$L,FILTER(
+            MOVS!$L:$L,
+            MOVS!$I:$I = $B`+(a+2)+`,
+            MOVS!$E:$E = $R`+(a+2)+`,
+            MOVS!$B:$B = $S`+(a+2)+`,
+            MOVS!$L:$L >= $G`+(a+2)+` - 0.99,
+            MOVS!$L:$L <= $G`+(a+2)+` + 0.99
+          )
+        )`
+      ]]);
+    }
+    for(a=0;(a<tempFM.length-1);a++){
+      ssFM.getRange(a+2, 17, 1, 2).setValues([[
+        `=COUNTIFS(
+          'DOCUMENTOS FACTURACION'!$B:$B,$I`+(a+2)+`,
+          'DOCUMENTOS FACTURACION'!$R:$R,$E`+(a+2)+`,
+          'DOCUMENTOS FACTURACION'!$S:$S,$B`+(a+2)+`,
+          'DOCUMENTOS FACTURACION'!$F:$F,FILTER(
+            'DOCUMENTOS FACTURACION'!$F:$F,
+            'DOCUMENTOS FACTURACION'!$B:$B = $I`+(a+2)+`,
+            'DOCUMENTOS FACTURACION'!$R:$R = $E`+(a+2)+`,
+            'DOCUMENTOS FACTURACION'!$S:$S = $B`+(a+2)+`,
+            'DOCUMENTOS FACTURACION'!$F:$F >= $L`+(a+2)+` - 0.99,
+            'DOCUMENTOS FACTURACION'!$F:$F <= $L`+(a+2)+` + 0.99
+          )
+        )`,
+        `=COUNTIFS(
+          'DOCUMENTOS FACTURACION'!$B:$B,$I`+(a+2)+`,
+          'DOCUMENTOS FACTURACION'!$R:$R,$E`+(a+2)+`,
+          'DOCUMENTOS FACTURACION'!$S:$S,$B`+(a+2)+`,
+          'DOCUMENTOS FACTURACION'!$G:$G,FILTER(
+            'DOCUMENTOS FACTURACION'!$G:$G,
+            'DOCUMENTOS FACTURACION'!$B:$B = $I`+(a+2)+`,
+            'DOCUMENTOS FACTURACION'!$R:$R = $E`+(a+2)+`,
+            'DOCUMENTOS FACTURACION'!$S:$S = $B`+(a+2)+`,
+            'DOCUMENTOS FACTURACION'!$G:$G >= $L`+(a+2)+` - 0.99,
+            'DOCUMENTOS FACTURACION'!$G:$G <= $L`+(a+2)+` + 0.99
+          )
+        )`
+      ]]);
+    }
+    var ssFFile = DriveApp.getFileById(ssF.getId());
+    ssFFile.moveTo(DriveApp.getFolderById(FOLDER_ID));
+  }else{ SpreadsheetApp.getUi().alert('No hay informacion para enviar.'); }
+}
+
+
+function enviarProv() {
+    // Archivo Origen
+  var ssOrigen = SpreadsheetApp.getActiveSpreadsheet(); 
+  var sheetODF = ssOrigen.getSheetByName("DOCUMENTOS FACTURACION");
+    // Obtiene los datos de la hoja "DOCUMENTOS FACTURACION"
+  var rangoDatosODF = sheetODF.getRange("A1:AE").getValues(); 
+  var sheetOM = ssOrigen.getSheetByName("MOVS");
+    // Obtiene los datos de la hoja "MOVS"
+  var rangoDatosOM = sheetOM.getRange("A1:V").getValues(); 
+    // Verifica si hay registros para copiar
+  if (rangoDatosODF.length > 0 && rangoDatosOM.length > 0){ 
+    var tempPDF = [[]], tempPM = [[]];
+      // Guarda encabezados 
+    tempPDF[0] = rangoDatosODF[0]; tempPM[0] = rangoDatosOM[0];
+     // Arreglo doble de datos en hoja de Doc Fact
+    for(i=1;i<rangoDatosODF.length;i++){
+      if (rangoDatosODF[i][0] || rangoDatosODF[i+1][0]){  
+          // Divide los registros de la hoja "DOCUMENTOS FACTURACION" (Columna 'U' numero 20) (Columna 'W' numero 22)
+        (rangoDatosODF[i][20]=="PROVISIONADA" || rangoDatosODF[i][20]=="DOLARES" || rangoDatosODF[i][22]=="CANCELADA")?tempPDF.push(rangoDatosODF[i]):0; 
+      }else{break;}
+    }
+     // Arreglo doble de datos en hoja de Movs
+    for(i=1;i<rangoDatosOM.length;i++){
+      if (rangoDatosOM[i][0] || rangoDatosOM[i+1][0]){  
+          // Divide los registros de la hoja "MOVS" (Columna 'N' numero 13) (Columna 'P' numero 15)
+        (rangoDatosOM[i][13]=="PROVISIONADA" || rangoDatosOM[i][13]=="DOLARES" || rangoDatosOM[i][15]=="CANCELADA")?tempPM.push(rangoDatosOM[i]):0; 
+      }else{break;} 
+    }
+      // Crea el Archivo de Verdaderos
+    var ssP = SpreadsheetApp.openById(PROVISIONADAS_ID); // Archivo Provisionadas MARZO
+    var ssPDF = ssP.getSheetByName("DOCUMENTOS FACTURACION");
+    var ssPM = ssP.getSheetByName("MOVS");
+      // Inserta los datos
+    tempPDF.shift(); tempPM.shift();
+     // Verifica si hay informacion para mandar
+    (tempPDF.length)?ssPDF.getRange(ssPDF.getLastRow()+1,1,tempPDF.length,tempPDF[0].length).setValues(tempPDF):0; 
+    (tempPM.length)?ssPM.getRange(ssPM.getLastRow()+1,1,tempPM.length,tempPM[0].length).setValues(tempPM):0;
+  }else{ SpreadsheetApp.getUi().alert('No hay informacion para enviar.'); }
+}
