@@ -1,0 +1,31 @@
+function ocultarHojasEnVariosArchivos() {
+  const hojasAOcultar = ["BAJAS", "COLAB-COMPLET", "PERSONAL_ACTIVO", "TD2"];
+  
+  const archivos = [
+    "183cUMPHPKRdkqJxUt2pCitJiWXUJ4Nh20R8CYV7Gsz8",
+    "1aFil285sEzp0ktVXM7scOKZyLc1SyTU98_o1XtQSaJ4",
+    "1gjuf6tl06ztVjtUBX-gDTSJAMs47EOVDDem8pK419YA",
+    "1mWfXEOIAFWqqP2Oe_cvYCGn21QHtNXP_tOI-Ebc5kyE",
+    "1RvgKv6ZNhBQZbUDbSuOV7WEijDR2HwR51fg_plY3Z9Q",
+    "1N2BaRTk3A18gBO2_fX_zAcNXlhGQMT9-ROvoDUFw-Ys",
+    "1lXolHUhdw2bJJ1RpSubwDapLzznB6Nlxe4Gw3OVJxyw",
+    "12mewfEb-gruGxZYmx0h6xnPa4qUqelckYH4OdJkDD0o",
+    "1X2zgUwjWbS7c5DIflphQziPbmMisiZZwzRd3YfhDoEE",
+    "1J6ZnQJ_tRGhG-ySmmTgGPTk1jw11Law5Dba0xQwwIU8"
+  ];
+
+  archivos.forEach(id => {
+    try {
+      const archivo = SpreadsheetApp.openById(id);
+      hojasAOcultar.forEach(nombreHoja => {
+        const hoja = archivo.getSheetByName(nombreHoja);
+        if (hoja && hoja.isSheetHidden() === false) {
+          hoja.hideSheet();
+          Logger.log(`Ocultada hoja '${nombreHoja}' en archivo ${id}`);
+        }
+      });
+    } catch (error) {
+      Logger.log(`❌ Error con archivo ${id}: ${error.message}`);
+    }
+  });
+}
