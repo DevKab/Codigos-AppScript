@@ -1,0 +1,8 @@
+function copiaInfoB314P344() {
+  const ssO = SpreadsheetApp.openById("1YfS4g2qHrcVSlTK-X_-LD183hzZ74dKmRIbC10dHpZE");
+  const range = ssO.getSheetByName("AC2.0").getRange("B314:P344");
+  const sheetD = SpreadsheetApp.openById("1quYFZl30fhntghAo7hSkNC_xEddo--n6TZIw8zj15Sg").getSheetByName("REPORTEO");
+  var values = range.getValues();
+  sheetD.getRange(1,1,31,15).setValues(values);
+  // range.copyTo(sheetD.getRange("A1"),{ contentsOnly: false });
+}
