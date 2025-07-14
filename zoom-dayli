@@ -1,0 +1,337 @@
+// ⚙️ CONFIGURACIÓN
+const ZOOM_CLIENT_ID = 'ZOOM_CLIENT_ID';
+const ZOOM_CLIENT_SECRET = 'ZOOM_CLIENT_SECRET';
+const ZOOM_ACCOUNT_ID = 'ZOOM_ACCOUNT_ID';
+const ZOOM_API_BASE = 'https://api.zoom.us/v2';
+
+const MODO_TEST = false;
+const FECHA_TEST = '2025-06-11';
+const MINUTA_AGENDA = 'MINUTA_AGENDA';
+
+const SHEET_ID = '1IoPaHNxCj8ptqhgjJZJ-9HgxFum_RK6QGXEakKP37ig';
+const SHEET_NAME = '1';
+
+const SESSION_FOLDERS = {
+  "Reunión Diaria - Desarrollo": {
+    folderId: '1D3WHHerMv2_9EgkVa_s8uLGnR3c9pnTm',
+    summaryFolderId: '1D3WHHerMv2_9EgkVa_s8uLGnR3c9pnTm'
+  },
+  "Juan Bautista (Desarrollo Kabzo)'s Zoom Meeting - AGENDA": {
+    videoFolderId: '15lqM-r3h7VYHEoSn5-6RTerkNWlVUakD',
+    summaryFolderId: '1dGuDzOo6ezpHWT2KQ2e-Pz3uYn4hHW3b'
+  },
+  "Sala de reuniones personales de Juan Bautista (Desarrollo Kabzo)": {
+    videoFolderId: '1RLc8-nVaQXNTvtQ1BzyhParGmGObEwA3',
+    summaryFolderId: '1RLc8-nVaQXNTvtQ1BzyhParGmGObEwA3'
+  }
+};
+
+
+let cachedAccessToken = null;
+
+// 🔐 Escapa texto para Markdown V2 (sin afectar links)
+function escapeMarkdown(text) {
+  if (!text) return '';
+  return text.replace(/([!_*\(\)~`>#+\-=|{}\.])/g, '\\$1');
+}
+
+
+// 🧠 Obtener token OAuth de Zoom
+function getAccessToken() {
+  if (cachedAccessToken) return cachedAccessToken;
+
+  const url = `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${ZOOM_ACCOUNT_ID}`;
+  const basicAuth = Utilities.base64Encode(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`);
+
+  const options = {
+    method: 'post',
+    headers: { Authorization: 'Basic ' + basicAuth },
+    muteHttpExceptions: true
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Error al obtener access token: ' + response.getContentText());
+  }
+
+  const data = JSON.parse(response.getContentText());
+  cachedAccessToken = data.access_token;
+  return cachedAccessToken;
+}
+
+// 📩 Mensaje por Telegram
+function sendTelegramMessage(text) {
+  const TELEGRAM_TOKEN = '7606306039:TELEGRAM_TOKEN'; 
+    // const TELEGRAM_TOKEN = '7355470023:TELEGRAM_TOKEN';  //aana
+  const CHAT_ID = 'CHAT_ID'; 
+    // const CHAT_ID = '2133367923'; //aanaß
+
+
+  const payload = {
+    chat_id: CHAT_ID,
+    text,
+    parse_mode: 'MarkdownV2',
+    disable_web_page_preview: true
+  };
+
+  const response = UrlFetchApp.fetch(
+    `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
+    { method: 'post', payload, muteHttpExceptions: true }
+  );
+
+  if (response.getResponseCode() !== 200) {
+    Logger.log('Error enviando mensaje Telegram: ' + response.getContentText());
+  } else {
+    Logger.log('✅ Mensaje enviado correctamente por Telegram.');
+  }
+}
+
+// 📅 Grabaciones del día
+function getTodayRecordings() {
+  let date;
+  if (MODO_TEST) {
+    date = FECHA_TEST;
+  } else {
+    const today = new Date();
+    date = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+
+  const url = `${ZOOM_API_BASE}/users/me/recordings?from=${date}&to=${date}`;
+
+  const response = UrlFetchApp.fetch(url, {
+    method: 'get',
+    headers: { 'Authorization': 'Bearer ' + cachedAccessToken },
+    muteHttpExceptions: true
+  });
+
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Error al obtener grabaciones: ' + response.getContentText());
+  }
+
+  const data = JSON.parse(response.getContentText());
+  return data.meetings || [];
+}
+
+
+// 🧾 Obtener IDs ya procesados
+function getProcessedKeys(sheet) {
+  const data = sheet.getDataRange().getValues();
+  const keys = new Set();
+  for (let i = 1; i < data.length; i++) {
+    keys.add(data[i][2] + '|' + Utilities.formatDate(new Date(data[i][1]), Session.getScriptTimeZone(), 'yyyy-MM-dd'));
+  }
+  return keys;
+}
+
+
+// 💾 Guardar archivo MP4 en Drive
+function saveFileToDrive(file, folderId) {
+  const nameDate = file.recording_start.replace(/:/g, '-').replace('T', ' ').split('.')[0];
+  const extension = file.file_type.toLowerCase();
+  const name = `${nameDate} - ${file.recording_type}.${extension}`;
+
+  const folder = DriveApp.getFolderById(folderId);
+  const existing = folder.getFilesByName(name);
+
+  if (existing.hasNext()) {
+    Logger.log('Archivo ya existe en Drive: ' + name);
+    return existing.next().getId();
+  }
+
+  try {
+    const url = file.download_url + '?access_token=' + cachedAccessToken;
+    const blob = UrlFetchApp.fetch(url).getBlob().setName(name);
+    const fileDrive = folder.createFile(blob);
+    Logger.log('Archivo guardado: ' + name);
+    return fileDrive.getId();
+  } catch (e) {
+    Logger.log('❌ Error guardando MP4: ' + e.message);
+    return null;
+  }
+}
+
+// 📑 Obtener resumen oficial de Zoom
+function getOfficialMeetingSummary(uuid) {
+  const encodedUUID = encodeURIComponent(encodeURIComponent(uuid));
+  const url = `${ZOOM_API_BASE}/meetings/${encodedUUID}/meeting_summary`;
+
+  const response = UrlFetchApp.fetch(url, {
+    method: 'get',
+    headers: { 'Authorization': 'Bearer ' + cachedAccessToken },
+    muteHttpExceptions: true
+  });
+
+  if (response.getResponseCode() !== 200) {
+    Logger.log(`❌ No se pudo obtener resumen para UUID ${uuid}`);
+    return null;
+  }
+
+  const data = JSON.parse(response.getContentText());
+  let content = '';
+
+  if (data.summary_overview) content += `📋 RESUMEN GENERAL:\n${data.summary_overview}\n\n`;
+  if (data.summary) content += `📝 RESUMEN DETALLADO:\n${data.summary}\n\n`;
+
+  if (Array.isArray(data.summary_details)) {
+    content += '🔍 DETALLES:\n';
+    data.summary_details.forEach(det => {
+      content += `- ${det.label}:\n${det.summary}\n\n`;
+    });
+  }
+
+  if (Array.isArray(data.next_steps)) {
+    content += '🚀 PRÓXIMOS PASOS:\n';
+    data.next_steps.forEach(step => content += `- ${step}\n`);
+    content += '\n';
+  }
+
+  if (Array.isArray(data.question_and_answer)) {
+    content += '❓ Q&A:\n';
+    data.question_and_answer.forEach((qa, i) => {
+      content += `${i + 1}. Q: ${qa.question}\n   A: ${qa.answer}\n`;
+    });
+    content += '\n';
+  }
+
+  if (data.summary_last_modified_user_email) {
+    content += `✍️ Editado por: ${data.summary_last_modified_user_email}\n\n`;
+  }
+
+  return content.trim() || 'No hay resumen disponible para esta reunión.';
+}
+
+// 🧠 Extraer sección "Próximos pasos"
+function extractNextStepsFromSummary(text) {
+  if (!text) return 'No hay próximos pasos disponibles.';
+  const match = text.match(/🚀 PRÓXIMOS PASOS:\n([\s\S]*?)(\n\n|$)/);
+  return match && match[1] ? match[1].trim() : 'No hay próximos pasos disponibles.';
+}
+
+
+
+function main() {
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+  if (!sheet) throw new Error('Hoja no encontrada: ' + SHEET_NAME);
+
+  cachedAccessToken = getAccessToken();
+
+    const recordings = getTodayRecordings();
+  Logger.log('Cantidad de grabaciones encontradas hoy: ' + recordings.length);
+
+  const processedKeys = getProcessedKeys(sheet);
+  Logger.log('Cantidad de sesiones ya procesadas en hoja: ' + processedKeys.size);
+
+
+  // const processedKeys = getProcessedKeys(sheet);
+  // const recordings = getTodayRecordings();
+
+  if (recordings.length === 0) {
+    Logger.log('⚠️ No hay grabaciones para hoy');
+  }
+
+  recordings.forEach(recording => {
+    const recordingDate = Utilities.formatDate(new Date(recording.start_time), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const key = recording.topic + '|' + recordingDate;
+
+    if (processedKeys.has(key)) {
+      Logger.log(`⏩ Ya procesado: ${key}`);
+      return; // Sigue con la siguiente sesión
+    }
+
+    const sessionName = recording.topic;
+    const folders = SESSION_FOLDERS[sessionName];
+    if (!folders) {
+      Logger.log(`⚠️ Sesión NO configurada en SESSION_FOLDERS: ${sessionName}`);
+      return;
+    }
+
+    Logger.log(`🎬 Procesando sesión: ${sessionName}`);
+
+    try {
+      // Buscar video en grabación (Zoom)
+      let videoDriveLink = '';
+      recording.recording_files.forEach(file => {
+        if (file.file_type === 'MP4') {
+          const folderId = folders.folderId || folders.videoFolderId;
+          const id = saveFileToDrive(file, folderId);
+          if (id) videoDriveLink = `https://drive.google.com/file/d/${id}/view`;
+        }
+      });
+
+      if (!videoDriveLink) {
+        Logger.log(`⚠️ No hay video para sesión: ${sessionName}`);
+      } else {
+        Logger.log(`✅ Video encontrado y guardado: ${videoDriveLink}`);
+      }
+
+      // Buscar resumen directamente en Zoom (si existe)
+      let resumenLink = '';
+      let resumen = '';
+      if (folders.summaryFolderId) {
+        resumen = getOfficialMeetingSummary(recording.uuid);
+        if (resumen && resumen !== 'No hay resumen disponible para esta reunión.') {
+          Logger.log(`✅ Resumen encontrado para sesión: ${sessionName}`);
+
+          const folder = DriveApp.getFolderById(folders.summaryFolderId);
+          const fecha = Utilities.formatDate(new Date(recording.start_time), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+          const nombre = `${sessionName} - ${fecha}`;
+
+          let docId = null;
+          const files = folder.getFilesByName(nombre);
+          if (files.hasNext()) {
+            docId = files.next().getId();
+            Logger.log(`📎 Resumen ya existe en Drive: ${nombre}`);
+          } else {
+            const doc = DocumentApp.create(nombre);
+            doc.getBody().setText(resumen);
+            doc.saveAndClose();
+            const file = DriveApp.getFileById(doc.getId());
+            folder.addFile(file);
+            DriveApp.getRootFolder().removeFile(file);
+            docId = doc.getId();
+            Logger.log(`🆕 Resumen guardado en Drive: ${nombre}`);
+          }
+          resumenLink = `https://docs.google.com/document/d/${docId}/edit`;
+        } else {
+          Logger.log(`⚠️ No hay resumen para sesión: ${sessionName}`);
+        }
+      }
+
+      if (!videoDriveLink && !resumenLink) {
+        Logger.log(`❌ No hay video ni resumen para sesión: ${sessionName}. No se envía mensaje.`);
+        return;
+      }
+
+      const rawSteps = extractNextStepsFromSummary(resumen);
+      const pasos = rawSteps
+        .split('\n')
+        .filter(l => l.trim() !== '')
+        .map(l => `➡️ ${l.trim()}`)
+        .join('\n');
+
+      const isAgenda = sessionName.toLowerCase().includes('agenda');
+      const linkExtra = isAgenda
+        ? '🗒️ *Minuta para seguimiento:*\nhttps://docs.google.com/spreadsheets/d/' + escapeMarkdown(MINUTA_AGENDA) + '/edit'
+        : escapeMarkdown('Quedamos atentos a cualquier comentario');
+
+      const mensaje =
+        `Buen día, comparto los datos de la sesión *${escapeMarkdown(sessionName)}*:\n\n` +
+        `🎥 *Video link:*\n${escapeMarkdown(videoDriveLink)}\n\n` +
+        `📝 *Resumen link:*\n${escapeMarkdown(resumenLink)}\n\n` +
+        `🚀 *Próximos pasos:*\n${escapeMarkdown(pasos)}\n\n` +
+        `${escapeMarkdown(linkExtra)}`;
+
+      sendTelegramMessage(mensaje);
+      Logger.log(`✅ Mensaje enviado para sesión: ${sessionName}`);
+
+      if (isAgenda) {
+        guardarAcuerdosEnMinutas(pasos, videoDriveLink, resumenLink);
+      }
+
+      sheet.appendRow([recording.id, new Date(recording.start_time), sessionName]);
+
+    } catch (e) {
+      Logger.log(`❌ Error procesando sesión "${sessionName}": ${e.message}`);
+    }
+  });
+}
