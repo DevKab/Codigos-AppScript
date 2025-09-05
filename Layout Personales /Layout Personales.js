@@ -11,7 +11,7 @@ function metodoHerenciaGastosPersonal(){//para la herencia
   SpreadsheetApp.flush(); // Fuerza la escritura de los cambios /*esto afuerza que suelte el pegado del 003 para que lo lleve en el excel */
 }
 
-function layoutMasterV1(libroOrigenLink, hojaOrigenNombre) {
+function layoutMasterV1(libroOrigenLink, hojaOrigenNombre) { //05/09/2025
   var libroOrigen = SpreadsheetApp.openById(libroOrigenLink); //Master concentrado
   var libroDestino = SpreadsheetApp.openById("1VZ0-VnMHkRb93bwSUaQlro08QdarlVCjR9HPaObcxoA"); //Layout V3
 
@@ -114,7 +114,8 @@ function layoutMasterV1(libroOrigenLink, hojaOrigenNombre) {
 
                 if(titular === "") continue;// Salta esta fila vacia
 
-              var importe = dataOrigen[i][23] ? dataOrigen[i][23].toString().replace(/[-,]/g, "") : ""; //Importe, sin giones 6
+                //var importe = dataOrigen[i][23] ? dataOrigen[i][23].toString().replace(/[-,]/g, "") : ""; //Importe, sin giones 6
+                var importe = dataOrigen[i][23] ? dataOrigen[i][23].toString().replace(/[,]/g, "") : "";
 
                 // Convertir a número y formatear como moneda MXN
                 var importeNum = parseFloat(importe);
@@ -160,13 +161,15 @@ function layoutMasterV1(libroOrigenLink, hojaOrigenNombre) {
       }
     }
   }
-  if (filasPegar.length > 0) {
-    var ultimaFilaDestino = hojaDestino.getLastRow();
-    var startRow = ultimaFilaDestino + 1;
+    if (filasPegar.length > 0) {
+      var ultimaFilaDestino = hojaDestino.getLastRow();
+      var startRow = ultimaFilaDestino + 1;
 
-    // Agrupar por identificador y sumar importes
-    var agrupados = {};
-    for (var j = 0; j < filasPegar.length; j++) {
+      // Agrupar por identificador y sumar importes según la condición solicitada
+      var importesPorId = {};
+
+      // Primero, agrupa todas las filas por identificador y guarda los importes originales
+      for (var j = 0; j < filasPegar.length; j++) {
         var fila = filasPegar[j];
         var identificador = fila[0];
         var banco = fila[20];
@@ -175,50 +178,77 @@ function layoutMasterV1(libroOrigenLink, hojaOrigenNombre) {
         var clabe = fila[21];
         var titular = fila[22];
         var importeStr = fila[23];
-        // Quitar formato de moneda para sumar
-        var importeNum = parseFloat(importeStr.toString().replace(/[^0-9.-]+/g,"")) || 0;
+        var importeNum = parseFloat(importeStr.toString().replace(/[^0-9.-]+/g, "")) || 0; // Quitar formato de moneda para sumar
 
-        if (!agrupados[identificador]) {
-            agrupados[identificador] = {
-                identificador,
-                banco,
-                tipo,
-                comenEmpresa,
-                clabe,
-                titular,
-                importe: 0
-            };
+        if (!importesPorId[identificador]) {
+          importesPorId[identificador] = [];
         }
-        agrupados[identificador].importe += importeNum;
-    }
+        importesPorId[identificador].push({
+          banco,
+          tipo,
+          comenEmpresa,
+          clabe,
+          titular,
+          importeNum
+        });
+      }
 
-    // Preparar los datos a pegar con la estructura requerida
-    var datosParaPegar = [];
-    var idx = 1;
-    for (var key in agrupados) {
-        var item = agrupados[key];
-        // Formatear el importe como moneda MXN
-        var importeFormateado = item.importe.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+      // Ahora, procesa cada identificador según la lógica solicitada
+      var datosParaPegar = [];
+      var idx = 1;
+      for (var key in importesPorId) {
+        // Si no hay identificador (columna A vacía), no se pasa
+        if (!key || key.trim() === "") continue;
+
+        var items = importesPorId[key];
+        var sumaNegativos = 0;
+        var sumaPositivos = 0;
+        var tienePositivo = false;
+
+        // Suma negativos y positivos
+        for (var k = 0; k < items.length; k++) {
+          var imp = items[k].importeNum;
+          if (imp < 0) sumaNegativos += imp;
+          if (imp > 0) {
+            sumaPositivos += imp;
+            tienePositivo = true;
+          }
+        }
+
+        var totalImporte = 0;
+        if (tienePositivo) {
+          // Si hay positivos, suma todos los negativos y positivos, pero la porción negativa se resta
+          totalImporte = sumaPositivos + sumaNegativos;
+        } else {
+          // Si no hay positivos, suma todos los negativos (como está el código original)
+          totalImporte = sumaNegativos;
+        }
+
+        // Usa los datos del primer elemento para los demás campos
+        var item = items[0];
+
+        // 👇 Aplica valor absoluto al total para quitar el signo negativo
+        totalImporte = Math.abs(totalImporte);//modificsacion 15/08/2025
+
+        var importeFormateado = totalImporte.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+
         datosParaPegar.push([
-            idx++,           // ID consecutivo
-            item.banco,      // Banco
-            item.tipo,       // Tipo TD o TC
-            item.comenEmpresa, // COMENTARIOS DE ENTREGA
-            item.clabe,      // CLABE
-            item.titular,    // Titular
-            importeFormateado // Importe sumado y formateado
+          idx++,
+          item.banco,
+          item.tipo,
+          item.comenEmpresa, // COMENTARIOS DE ENTREGA
+          item.clabe,
+          item.titular,
+          key,                // ← Identificador en la columna G
+          importeFormateado
         ]);
-    }
+      }
+
+      hojaDestino.getRange(startRow, 5, datosParaPegar.length, 1).setNumberFormat("@");
+      hojaDestino.getRange(startRow, 1, datosParaPegar.length, datosParaPegar[0].length).setValues(datosParaPegar);
 
 
-    // Formatea columna C (índice 4) como texto (solo la columna de CLABE)
-    hojaDestino.getRange(startRow, 5, datosParaPegar.length, 1).setNumberFormat("@");
-   // hojaDestino.getRange(startRow, 4, datosParaPegar.length, 1).setNumberFormat("@");
-
-    // Ahora sí: Pega todos los datos
-    hojaDestino.getRange(startRow, 1, datosParaPegar.length, datosParaPegar[0].length).setValues(datosParaPegar);
-
-    Logger.log(`${datosParaPegar.length} filas pegadas en hojaDestino.`);
+      Logger.log(`${datosParaPegar.length} filas pegadas en hojaDestino.`);
   } else {
     Logger.log("No se encontraron filas con la fecha de hoy.");
   }
@@ -230,8 +260,9 @@ function metodoEliminarV02(){
     var hojaDestino = libroDestino.getSheetByName("Layout");
 
     var ultimaFila = hojaDestino.getLastRow();
-    if (ultimaFila > 0) {
-        hojaDestino.getRange(2, 1, ultimaFila, 7).clearContent(); // Desde A2:E[ultimaFila] //fila, columna, filaUltima, ColumnaFinal
+    if (ultimaFila >= 2) {
+        // Desde A2:H[ultimaFila]
+        hojaDestino.getRange(2, 1, ultimaFila - 1, 8).clearContent(); // Desde A2:E[ultimaFila] //fila, columna, filaUltima, ColumnaFinal
         Logger.log("Contenido eliminado de A2:G" + ultimaFila);
     }
 }
