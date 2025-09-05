@@ -60,7 +60,6 @@ function copiarYpegarDatos_FT12(hojaOrigen, hojaDestino, rangoOrigen, columnaIni
 }
 
 function copiarFormatoAGoogleDrive() {
-  
   try {
     var hojaDeCalculo = SpreadsheetApp.getActiveSpreadsheet();// Obtén la hoja de cálculo activa
     var currentDate = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
@@ -271,7 +270,7 @@ function registrarEjecucion(funcionNombre, resultado) {
 }
 
 function concentrado(){//conectado al hijo.
-  var libroOrigen = SpreadsheetApp.openById('1oE6mm0EsGP9-2_VLH4Q8lvwwpSd80Sr-uHT3JtWH5Fs'); // P-PS-FT-003_Rev.2_SOLICITUD DE GASTOS PERSONALES 2025 == 19fionVnXuVOe2Ex5WthuF5te0YrZbPz-HN8YvV9XwuA
+  var libroOrigen = SpreadsheetApp.openById('19fionVnXuVOe2Ex5WthuF5te0YrZbPz-HN8YvV9XwuA'); // P-PS-FT-003_Rev.2_SOLICITUD DE GASTOS PERSONALES 2025 == 19fionVnXuVOe2Ex5WthuF5te0YrZbPz-HN8YvV9XwuA
   var libroDestino = SpreadsheetApp.getActiveSpreadsheet(); // Obtener el libro activo //P-AE-FT-007_10-R.
 
   var hojaG2 = [
@@ -296,7 +295,7 @@ function metodo10R(hojaOrigen, hojaDestino, rango) {//funciona original == 19/09
   var filaInicioDestino = 77; // Fila 77 en la hoja destino
   var filaFinalDestino = 364; // Fila 254 en la hoja destino
   var columnaInicioDestino = 5; // Columna E en la hoja destino
-  var columnaFinalDestino = 40; // Columna  29 = AD => 37 = AK en la hoja destino 6 AK // AL => 38 // AM 39//AN 40
+  var columnaFinalDestino = 40; // Columna  29 = AD => 37 = AK en la hoja destino 6 AK // AL => 38 // AM 39
 
   var dataValues = hojaOrigen.getRange(rango).getValues();
 
@@ -337,7 +336,7 @@ function metodo10R(hojaOrigen, hojaDestino, rango) {//funciona original == 19/09
         Logger.log("La fecha de hoy es: " + fomateoTaday);
 
         // Verificar si la celda 24 = Z  => 26 AD es "PAGADO" o "PAGADO Y COMPROBANTE EN CARPETA"
-        if (dataValues[i][28] === "PAGADO Y COMPROBANTE EN CARPETA") { //28 a 29
+        if (dataValues[i][28] === "PAGADO" || dataValues[i][28] === "PAGADO Y COMPROBANTE EN CARPETA") { //28 a 29
           // Pegar datos en la hoja destino dentro del rango D77:AD254
           hojaDestino.getRange(filaDestino, columnaInicioDestino, 1, columnaFinalDestino - columnaInicioDestino + 1)
             .setValues([dataValues[i].slice(0, columnaFinalDestino - columnaInicioDestino + 1)]); // Pegar solo hasta la col.AK(para poder agrenda el rango de pegado a la hoja destino debes de modificar lo que es la variable "columnaFinalDestino" y contar bien es que posicion esta la posicion)
@@ -356,22 +355,19 @@ function metodo10R(hojaOrigen, hojaDestino, rango) {//funciona original == 19/09
     Logger.log("Pegado finalizado, datos hasta la fila: " + (filaDestino - 1));
   }
 }
-
-
-///////////////
 function copiarMasterA10R() {//copiado = condicion para que copie fecha de hoy y todos los status menos nuevo y vacio.
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
-  var libroDestino = SpreadsheetApp.openById('1PSN73jdggvKUvLSg7rWkQbw7Bo3Pgm4Ik3YSok2t_P8'); // Master = 19eYrBuMNHkFySoPkYwGrst842lEOIHVBK6E0ozyb2SY
+  var libroDestino = SpreadsheetApp.openById('1Hfc3Oki6vK-Y1xyU48IB4voXW-RjT-N1WVE0EpajWvA'); // Master = 19eYrBuMNHkFySoPkYwGrst842lEOIHVBK6E0ozyb2SY
 
   var hojaOrigen = libroOrigen.getSheetByName("G2 - GASTOS ABBY (Principal)");
   var hojaDestino = libroDestino.getSheetByName("ANUAL");
 
-   // Obtener los valores de la hoja origen
-  var datos = hojaOrigen.getRange("E77:AN364").getValues();//A:AO a A:AP
-
   // Obtener la fecha actual formateada
   var today = new Date();
   var fomateoToday = Utilities.formatDate(today, Session.getScriptTimeZone(), 'dd/MM/yy');
+
+   // Obtener los valores de la hoja origen
+  var datos = hojaOrigen.getRange("E77:AN364").getValues();//A:AO a A:AP
 
   // Preparar un arreglo para las filas que cumplen las condiciones
   var filasParaPegar = [];
