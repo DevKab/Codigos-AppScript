@@ -4,7 +4,7 @@
  * @ID de Implementación: 1VOwFFtMS4Rb1tb7nuxwhgbzz8E4WldwqOt_X-l03qBhTql3n4cRmEE2a
  * Convierte en datos planos las filas cuya fecha sea más antigua a 1 semana.
  * 
- * @param {string} SHIT - Parametro vacio
+ * @param {string} SHHH - Parametro vacio
  * @param {string} SHID - Nombre de la hoja
  * @param {string} SSID - ID del Spreadsheet
  * @param {number} row - Fila inicial desde donde tomar los datos
@@ -25,7 +25,7 @@ function datos(SSID, SHID, row, col) {
   
   // Limpiar formato y validaciones de los datos encontrados
   hoja.getRange(row, 1, datosFiltrados.length-1, datosFiltrados[0].length)
-    .clearFormat()
+    // .clearFormat()
     .clearDataValidations();
   
   // Mensaje de alerta
