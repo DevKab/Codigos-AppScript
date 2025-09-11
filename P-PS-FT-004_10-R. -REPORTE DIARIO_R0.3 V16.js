@@ -6,7 +6,7 @@ function onOpen() {
     + "\n- 🚫 No modificar la posición de las tablas o el rango."
     + "\n- 🔷 ASEGÚRATE DE LLENAR TODAS LAS COLUMNAS IDENTIFICADAS EN COLOR AZÚL"
     + "\n- ✅ Para un uso adecuado del archivo consulta tu instrucción de trabajo P-PS-IT-001_ SOLICITUD DE GASTOS CEOA REV 0.1"
-    + "\n- ☎︎ Contacta a 'Optimización' para realizar modificaciones. V13";
+    + "\n- ☎︎ Contacta a 'Optimización' para realizar modificaciones. V16";
   
   ui.alert(mensaje);
 
@@ -15,6 +15,14 @@ function onOpen() {
     .addItem('1. Copiado 003 - GASTOS PERSONALES', 'metodoConTablaGastos')
     .addItem('2. Backup del 10-R', 'allFunct')
     .addToUi();
+
+    ui.
+    createMenu("PAPELETAS"). // 10R
+    // addItem("Papeletas 5R","mandarInfoPapeletasDir").
+    addItem("Papeletas 10R","mandarInfoPapeletasPer").
+    // addItem("Borrar 5R","borrar5R").
+    addItem("Borrar 10R","borrar10R").
+    addToUi();
 }
 
 function metodoConTablaGastos(){
@@ -94,8 +102,7 @@ function copiarFormatoAGoogleDrive() {
 
     /*g1 Y g1 FONDEO DE TARJETAS */
      var hojasDatosFT = [
-      { origen: "ENTRECUENTAS", destino: "FONDEO DE TARJETAS", rango: "O93:T126", columnaInicio: 3 }//modificado 11/09/2024 C-H = COPIO
-      /*{ origen: "G2 - GASTOS ABBY (Principal)", destino: "T EDO CTA 2024", rango: "D261:O271", columnaInicio: 2 } //modificado 11/09/2024 = COPIO*/
+      { origen: "ENTRECUENTAS", destino: "FONDEO DE TARJETAS", rango: "P93:U126", columnaInicio: 3 }//modificado 11/09/2024 C-H = COPIO
     ];
 
     hojasDatosFT.forEach(function(hoja) {
@@ -118,11 +125,7 @@ function copiarFormatoAGoogleDrive() {
 function limpiarCeldasEnHojas(nuevaHojaDeCalculo) {
   var hojas = [
     { nombre: "G2 - GASTOS ABBY (Principal)", rangos: ["D6:AC67", "E77:AN364"] },//, "AA74"
-    { nombre: "ENTRECUENTAS", rangos: ["B3:C10", "B12:C16", "B18:C25", "B27:C32", "B34:C38", "B40:C44", "B46:C50", "B52:C56", "B58:C62","B64:C68", "B70:C78", "B80:C84", "B86:C90", 
-                                       "B92:C96", "B98:C102", "B104:C108", "B110:C114", "B116:C120", "B122:C126", "B128:C132", "B134:C138", "B140:C144", "B146:C150", "B152:C156", "B158:C162", 
-                                       "F3:G7", "F9:G13", "F15:G19", "F21:G25", "F27:G34", "F36:G40", "F42:G46", "F48:G55", "F57:G64", "F66:G70", "F72:G81", "F83:G87", "F89:G93", "F95:G99", "F101:G105", "F107:G111", "F113:G117", "F119:G123", "F125:G129", "F131:G138", "F140:G148", "F150:G154", "F156:G160", "F162:G166", "F168:G172", "F174:G178", "F180:G184", "F186:G190",
-                                       "K3:L23", "K26:L39", "K42:L60", "K63:L86", "K89:L109", "O2:Q50", "O54:T89", "O93:T126"
-                                      ] }
+    { nombre: "ENTRECUENTAS", rangos: ["B4:H300", "I3:N110", "P3:U50", "P54:AG89", "P93:AA126"] }
   ];
 
   hojas.forEach(function(hoja) {
@@ -355,9 +358,10 @@ function metodo10R(hojaOrigen, hojaDestino, rango) {//funciona original == 19/09
     Logger.log("Pegado finalizado, datos hasta la fila: " + (filaDestino - 1));
   }
 }
+//////////copiado10R_CONCENTRADO///////////
 function copiarMasterA10R() {//copiado = condicion para que copie fecha de hoy y todos los status menos nuevo y vacio.
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
-  var libroDestino = SpreadsheetApp.openById('1Hfc3Oki6vK-Y1xyU48IB4voXW-RjT-N1WVE0EpajWvA'); // Master = 19eYrBuMNHkFySoPkYwGrst842lEOIHVBK6E0ozyb2SY
+  var libroDestino = SpreadsheetApp.openById('11FniTDx4I_FtuysdLikwMbRhbC_wOaZMuE5mfdhrPYc'); // Master = 19eYrBuMNHkFySoPkYwGrst842lEOIHVBK6E0ozyb2SY
 
   var hojaOrigen = libroOrigen.getSheetByName("G2 - GASTOS ABBY (Principal)");
   var hojaDestino = libroDestino.getSheetByName("ANUAL");
@@ -398,4 +402,22 @@ function copiarMasterA10R() {//copiado = condicion para que copie fecha de hoy y
   } else {
     Logger.log("No se encontraron filas que cumplan las condiciones para copiar.");
   }
+}
+///Papeletas//-> Gustavo
+const SSID = SpreadsheetApp.getActiveSpreadsheet().getId();
+
+function mandarInfoPapeletasDir(){ // 5R
+  Papeletas.papeletasInfoDir(SSID);
+}
+
+function mandarInfoPapeletasPer(){ // 10R
+  Papeletas.papeletasInfoPer(SSID);
+}
+
+function borrar5R() {
+  Papeletas.eraseColumns5R(SSID);
+}
+
+function borrar10R() {
+  Papeletas.eraseColumns10R(SSID);
 }
