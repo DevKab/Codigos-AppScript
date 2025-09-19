@@ -1,0 +1,246 @@
+/**
+ * Transfiere objetivos siguiendo la regla principal:
+ * - Primero usa plantillas grises vacías (bloques de 11 filas).
+ * - Si no hay suficientes, crea nuevos bloques numerados al final.
+ */
+function transferirObjetivosYGantt() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const hojaDestino = ss.getSheetByName("Diagrama de gantt");
+  const hojaOrigen = ss.getSheetByName("Project Charter");
+
+  if (!hojaOrigen || !hojaDestino) {
+    ui.alert('Error: Asegúrate de que las hojas "Project Charter" y "Diagrama de gantt" existan.');
+    return;
+  }
+
+  const objetivosParaAgregar = obtenerDatosDeOrigen(hojaOrigen);
+  if (objetivosParaAgregar.length === 0) {
+    ui.alert('No se encontraron nuevos objetivos en "Project Charter" para procesar.');
+    return;
+  }
+
+  SpreadsheetApp.flush();
+
+  let objetivosProcesados = 0;
+  let filasDisponibles = encontrarBloquesDisponibles(hojaDestino);
+
+  // --- 1. Usar plantillas vacías si existen
+  while (filasDisponibles.length > 0 && objetivosParaAgregar.length > 0) {
+    const numFila = filasDisponibles.shift();
+    const datos = objetivosParaAgregar.shift();
+    const numeroPrincipal = parseInt(hojaDestino.getRange(numFila, 2).getValue());
+
+    if (!isNaN(numeroPrincipal)) {
+      formatearBloque(hojaDestino, numFila, numeroPrincipal, datos.objetivo, datos.scope, false);
+      objetivosProcesados++;
+    }
+  }
+
+  // --- 2. Si quedan objetivos, crear bloques nuevos
+  if (objetivosParaAgregar.length > 0) {
+    let ultimoBloque = encontrarUltimoBloque(hojaDestino);
+
+    while (objetivosParaAgregar.length > 0) {
+      const datos = objetivosParaAgregar.shift();
+      const siguienteNumero = ultimoBloque.numero + 1;
+      const filaDestino = hojaDestino.getLastRow() + 1;
+
+      // Crear 11 filas nuevas copiando el formato del último bloque
+      hojaDestino.insertRowsAfter(hojaDestino.getLastRow(), 11);
+      hojaDestino.getRange(ultimoBloque.fila, 1, 11, hojaDestino.getLastColumn())
+        .copyTo(hojaDestino.getRange(filaDestino, 1, 11, hojaDestino.getLastColumn()));
+
+      // Formatear el nuevo bloque
+      formatearBloque(hojaDestino, filaDestino, siguienteNumero, datos.objetivo, datos.scope, true);
+
+      ultimoBloque = { fila: filaDestino, numero: siguienteNumero };
+      objetivosProcesados++;
+    }
+  }
+
+  SpreadsheetApp.flush();
+  ui.alert(`Proceso completado. Se procesaron ${objetivosProcesados} objetivos.`);
+}
+
+
+/** Encuentra bloques de 11 filas (1 objetivo + 10 subtareas) que estén vacíos */
+function encontrarBloquesDisponibles(hoja) {
+  const bloquesDisponibles = [];
+  const ultimaFila = hoja.getLastRow();
+  const valoresColB = hoja.getRange(1, 2, ultimaFila).getValues();
+  const fondosColC = hoja.getRange(1, 3, ultimaFila).getBackgrounds();
+  const valoresColC = hoja.getRange(1, 3, ultimaFila).getValues();
+
+  for (let i = 0; i < ultimaFila; i++) {
+    if (fondosColC[i][0] === "#cccccc" && !isNaN(valoresColB[i][0]) && valoresColB[i][0] !== "") {
+      const filaInicio = i + 1;
+      let bloqueVacio = true;
+
+      for (let j = 0; j < 11; j++) {
+        if (valoresColC[i + j] && valoresColC[i + j][0] !== "") {
+          bloqueVacio = false;
+          break;
+        }
+      }
+
+      if (bloqueVacio) {
+        bloquesDisponibles.push(filaInicio);
+      }
+    }
+  }
+  return bloquesDisponibles;
+}
+
+
+/** Formatea un bloque de 11 filas (1 objetivo + 10 subtareas) */
+function formatearBloque(hoja, filaInicio, numero, objetivo, scope, esClonado = false) {
+  const numColumnasFormato = 7; // hasta col G
+
+  // Objetivo principal
+  hoja.getRange(filaInicio, 2).setValue(numero);
+  hoja.getRange(filaInicio, 3).setValue(objetivo).setFontWeight('bold').setWrap(true);
+  hoja.getRange(filaInicio, 2, 1, numColumnasFormato).setBackground('#cccccc');
+
+  // Subtareas
+  for (let j = 1; j <= 10; j++) {
+    const filaSubtarea = filaInicio + j;
+    hoja.getRange(filaSubtarea, 2).setValue(`${numero}.${j}`);
+    hoja.getRange(filaSubtarea, 2, 1, numColumnasFormato).setBackground(null).setFontWeight(null);
+    hoja.getRange(filaSubtarea, 3).setWrap(true);
+
+    if (j === 1) {
+      hoja.getRange(filaSubtarea, 3).setValue(scope || "");
+    } else {
+      hoja.getRange(filaSubtarea, 3).clearContent();
+    }
+
+    // Fórmula en G (duración sin fines de semana)
+hoja.getRange(filaSubtarea, 7)
+  .setFormula(
+    `=IF(AND(E${filaSubtarea}<>""; F${filaSubtarea}<>"");
+       IF(NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1>=30;
+          INT((NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1)/30) & " mes(es) " &
+          INT(MOD((NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1);30)/5) & " semana(s) " &
+          MOD((NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1);5) & " día(s)";
+          IF(NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1>=5;
+             INT((NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1)/5) & " semana(s) " &
+             MOD((NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1);5) & " día(s)";
+             NETWORKDAYS(E${filaSubtarea}; F${filaSubtarea})-1 & " día(s)"
+          )
+       );
+    "")`
+  );
+
+  }
+
+  const filaPrimeraSubtarea = filaInicio + 1;
+  const filaUltimaSubtarea = filaInicio + 10;
+
+  // En columna E y F del objetivo
+  hoja.getRange(filaInicio, 5).setFormula(`=E${filaPrimeraSubtarea}`);
+  hoja.getRange(filaInicio, 6).setFormula(`=F${filaUltimaSubtarea}`);
+
+  // Duración total en el objetivo
+hoja.getRange(filaInicio, 7).setFormula(
+  `=IF(AND(E${filaInicio}<>""; F${filaInicio}<>"");
+     IF(NETWORKDAYS(E${filaInicio}; F${filaInicio})>=30;
+        INT(NETWORKDAYS(E${filaInicio}; F${filaInicio})/30) & " mes(es) " &
+        INT(MOD(NETWORKDAYS(E${filaInicio}; F${filaInicio});30)/5) & " semana(s) " &
+        MOD(NETWORKDAYS(E${filaInicio}; F${filaInicio});5) & " día(s)";
+        IF(NETWORKDAYS(E${filaInicio}; F${filaInicio})>=5;
+           INT(NETWORKDAYS(E${filaInicio}; F${filaInicio})/5) & " semana(s) " &
+           MOD(NETWORKDAYS(E${filaInicio}; F${filaInicio});5) & " día(s)";
+           NETWORKDAYS(E${filaInicio}; F${filaInicio}) & " día(s)"
+        )
+     );
+  "")`
+);
+}
+
+
+/** Encuentra el último bloque de objetivo existente */
+function encontrarUltimoBloque(hoja) {
+  const ultimaFila = hoja.getLastRow();
+  const numeros = hoja.getRange(1, 2, ultimaFila).getValues();
+  const fondos = hoja.getRange(1, 3, ultimaFila).getBackgrounds();
+
+  for (let i = ultimaFila - 1; i >= 0; i--) {
+    if (fondos[i][0] === "#cccccc" && !isNaN(numeros[i][0]) && numeros[i][0] !== "" && numeros[i][0].toString().indexOf(".") === -1) {
+      return { fila: i + 1, numero: parseInt(numeros[i][0]) };
+    }
+  }
+  return { fila: 1, numero: 0 };
+}
+
+
+/** Obtiene objetivos desde "Project Charter" */
+function obtenerDatosDeOrigen(hoja) {
+  const datosOrigen = hoja.getDataRange().getValues();
+  let filaDeInicio = -1;
+  const textoEncabezado = "Objetivo";
+
+  for (let i = 0; i < datosOrigen.length; i++) {
+    if (datosOrigen[i][3] && datosOrigen[i][3].toString().trim().startsWith(textoEncabezado)) {
+      filaDeInicio = i + 1;
+      break;
+    }
+  }
+
+  if (filaDeInicio === -1) return [];
+
+  const resultados = [];
+  for (let i = filaDeInicio; i < datosOrigen.length; i++) {
+    const objetivo = datosOrigen[i][3];
+    const scope = datosOrigen[i][7];
+    if (objetivo && objetivo.toString().trim() !== "") {
+      resultados.push({ objetivo, scope });
+    } else {
+      break;
+    }
+  }
+  return resultados;
+}
+
+
+
+
+/** Busca la fila de un objetivo dado un número */
+function buscarFilaObjetivo(hoja, numObjetivo, limiteFila) {
+  const valoresColB = hoja.getRange(1, 2, limiteFila).getValues();
+  const fondosColC = hoja.getRange(1, 3, limiteFila).getBackgrounds();
+
+  for (let i = limiteFila - 1; i >= 0; i--) {
+    if (fondosColC[i][0] === "#cccccc" && valoresColB[i][0].toString() === numObjetivo) {
+      return i + 1;
+    }
+  }
+  return null;
+}
+
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('⚙️ Tareas Automatizadas')
+    .addItem('📌 Transferir Objetivos a Gantt', 'transferirObjetivosYGantt')
+    .addToUi();
+}
+
+function onEdit(e) {
+  const hoja = e.range.getSheet();
+  const fila = e.range.getRow();
+  const col = e.range.getColumn();
+
+  // Solo si editan la columna H (8)
+  if (col === 8) {
+    const valor = e.range.getValue();
+    if (valor === "TERMINADO") {
+      // Pone la fecha actual en columna F (6) de la misma fila
+      hoja.getRange(fila, 6).setValue(new Date());
+    } else if (valor === "") {
+      // Si borran el estado, también borrar la fecha en F
+      hoja.getRange(fila, 6).clearContent();
+    }
+  }
+}
+
