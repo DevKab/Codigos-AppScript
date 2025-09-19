@@ -124,7 +124,7 @@ function copiarFormatoAGoogleDrive() {
 
 function limpiarCeldasEnHojas(nuevaHojaDeCalculo) {
   var hojas = [
-    { nombre: "G2 - GASTOS ABBY (Principal)", rangos: ["D6:AC67", "E77:AN364"] },//, "AA74"
+    { nombre: "G2 - GASTOS ABBY (Principal)", rangos: ["D6:AC67", "E77:AN464"] },//, "AA74"
     { nombre: "ENTRECUENTAS", rangos: ["B4:H300", "I3:N110", "P3:U50", "P54:AG89", "P93:AA126"] }
   ];
 
@@ -371,7 +371,7 @@ function copiarMasterA10R() {//copiado = condicion para que copie fecha de hoy y
   var fomateoToday = Utilities.formatDate(today, Session.getScriptTimeZone(), 'dd/MM/yy');
 
    // Obtener los valores de la hoja origen
-  var datos = hojaOrigen.getRange("E77:AN364").getValues();//A:AO a A:AP
+  var datos = hojaOrigen.getRange("E77:AN464").getValues();//A:AO a A:AP
 
   // Preparar un arreglo para las filas que cumplen las condiciones
   var filasParaPegar = [];
