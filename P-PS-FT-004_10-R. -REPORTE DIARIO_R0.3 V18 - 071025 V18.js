@@ -33,6 +33,9 @@ function allFunct() {
   copiarMasterA10R();//SE MANDA AL MASTER LA INFORMACION 10/06/2025
   copiarArchivosG2(); //implementado 03/06/2024 
   copiarFormatoAGoogleDrive();
+  //mover y bloqueo de usuarios
+  bloquearTodasLasHojas();
+  moverArchivo();
 }
 
 function copiaYpegarDatos_SD(hojaOrigen, hojaDestino, rangoOrigen, columnaInicio, rangoLetras) { //quedo 4:37, G1,G2, G3 de SD
@@ -361,8 +364,9 @@ function metodo10R(hojaOrigen, hojaDestino, rango) {//funciona original == 19/09
 //////////copiado10R_CONCENTRADO///////////
 function copiarMasterA10R() {//copiado = condicion para que copie fecha de hoy y todos los status menos nuevo y vacio.
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
-  var libroDestino = SpreadsheetApp.openById('11FniTDx4I_FtuysdLikwMbRhbC_wOaZMuE5mfdhrPYc'); // Master = 19eYrBuMNHkFySoPkYwGrst842lEOIHVBK6E0ozyb2SY
-
+  //var libroDestino = SpreadsheetApp.openById('11FniTDx4I_FtuysdLikwMbRhbC_wOaZMuE5mfdhrPYc'); // Master = 19eYrBuMNHkFySoPkYwGrst842lEOIHVBK6E0ozyb2SY
+  var libroDestino = SpreadsheetApp.openById('1eQHolmm_3BPFSkG4jZvRgACWLxiLkXsNNJv2AubijOQ'); // Master = 19eYrBuMNHkFySoPkYwGrst842lEOIHVBK6E0ozyb2SY
+    
   var hojaOrigen = libroOrigen.getSheetByName("G2 - GASTOS ABBY (Principal)");
   var hojaDestino = libroDestino.getSheetByName("ANUAL");
 
@@ -420,4 +424,52 @@ function borrar5R() {
 
 function borrar10R() {
   Papeletas.eraseColumns10R(SSID);
+}
+
+////////////nueva implementacion 07/10/2025/////////
+function bloquearTodasLasHojas() {//
+  var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
+  var hojas = libroOrigen.getSheets(); // Obtiene todas las hojas del archivo
+  
+  // Lista de correos que SÍ tendrán permiso de editar
+  var usuariosPermitidos = [
+    "verificador2@kabzo.org",
+    //"optimizacion@kabzo.org",
+    //"analistaprocesos2@kabzo.org"
+  ];
+  
+  hojas.forEach(function(hoja) {
+    // Crear o actualizar protección en la hoja
+    var proteccion = hoja.protect().setDescription("Protección automática: " + hoja.getName());
+    
+    // Quitar todos los editores actuales
+    proteccion.removeEditors(proteccion.getEditors());
+
+    // Permitir solo a estos usuarios
+    proteccion.addEditors(usuariosPermitidos);
+    
+    // Desactivar edición por dominio (en caso de que esté activada)
+    if (proteccion.canDomainEdit()) {
+      proteccion.setDomainEdit(false);
+    }
+  });
+  
+  Logger.log("Se han protegido todas las hojas del archivo.");
+}
+
+function moverArchivo() {//mueve 29/09/2025 -> unidad compartida
+  // Reemplaza 'ID_CARPETA_DESTINO' con el ID de la carpeta a la que deseas mover el archivo.
+  var idCarpetaDestino = '1NNgMCbCQioqTvp35nN9XTLy2xB62EYeg';//carpeta de backUp de azael
+
+  // Si el script está vinculado a la hoja de cálculo que quieres mover,
+  // puedes obtener su ID automáticamente.
+  var archivoActual = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId());
+  
+  // O, si prefieres mover un archivo específico por su ID, usa esta línea en su lugar:
+  // var archivoMover = DriveApp.getFileById('ID_DEL_ARCHIVO_A_MOVER');
+
+  var carpetaDestino = DriveApp.getFolderById(idCarpetaDestino);
+  
+  // Mueve el archivo a la carpeta de destino.
+  archivoActual.moveTo(carpetaDestino);
 }
