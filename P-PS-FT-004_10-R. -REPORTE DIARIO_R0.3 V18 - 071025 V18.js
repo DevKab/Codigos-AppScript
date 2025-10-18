@@ -426,35 +426,49 @@ function borrar10R() {
   Papeletas.eraseColumns10R(SSID);
 }
 
-////////////nueva implementacion 07/10/2025/////////
-function bloquearTodasLasHojas() {//
+////////////nueva implementacion 17/10/2025/////////
+function bloquearTodasLasHojas() {
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
-  var hojas = libroOrigen.getSheets(); // Obtiene todas las hojas del archivo
+  var hojas = libroOrigen.getSheets();
   
   // Lista de correos que SÍ tendrán permiso de editar
   var usuariosPermitidos = [
-    "verificador2@kabzo.org",
+    "verificador@kabzo.org",
     //"optimizacion@kabzo.org",
     //"analistaprocesos2@kabzo.org"
   ];
   
   hojas.forEach(function(hoja) {
-    // Crear o actualizar protección en la hoja
-    var proteccion = hoja.protect().setDescription("Protección automática: " + hoja.getName());
-    
-    // Quitar todos los editores actuales
-    proteccion.removeEditors(proteccion.getEditors());
+    try {
+      Logger.log("Intentando proteger hoja: " + hoja.getName());
+      
+      // Crear o actualizar protección en la hoja
+      var proteccion = hoja.protect().setDescription("Protección automática: " + hoja.getName());
+      
+      // Quitar todos los editores actuales
+      var editores = proteccion.getEditors();
+      if (editores.length > 0) {
+        proteccion.removeEditors(editores);
+      }
+      
+      // Permitir solo a estos usuarios
+      if (usuariosPermitidos.length > 0) {
+        proteccion.addEditors(usuariosPermitidos);
+      }
+      
+      // Desactivar edición por dominio (si aplica)
+      if (proteccion.canDomainEdit()) {
+        proteccion.setDomainEdit(false);
+      }
 
-    // Permitir solo a estos usuarios
-    proteccion.addEditors(usuariosPermitidos);
-    
-    // Desactivar edición por dominio (en caso de que esté activada)
-    if (proteccion.canDomainEdit()) {
-      proteccion.setDomainEdit(false);
+      Logger.log("✅ Protección aplicada correctamente a: " + hoja.getName());
+
+    } catch (e) {
+      Logger.log("❌ Error en hoja: " + hoja.getName() + " → " + e.message);
     }
   });
   
-  Logger.log("Se han protegido todas las hojas del archivo.");
+  Logger.log("Proceso finalizado. Revisa el registro (Ctrl + Enter o Ver > Registro).");
 }
 
 function moverArchivo() {//mueve 29/09/2025 -> unidad compartida
