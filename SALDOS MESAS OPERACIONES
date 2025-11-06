@@ -1,0 +1,335 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  var mensaje = "Recuerda que esto es una plantilla automatizada:"
+    + "\n- 🚫 No agregar o quitar columnas y filas."
+    + "\n- 🚫 No alterar fórmulas."
+    + "\n- 🚫 No modificar la posición de las tablas o el rango."
+    + "\n- ✅ Contacta a 'Optimización' para realizar modificaciones.";
+  ui.alert('AVISO IMPORTANTE ❗', mensaje,
+    ui.ButtonSet.OK);
+}
+
+
+function SumaTotal() {
+  const sheetName = 'VIGENTE';
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+
+  if (!sheet) {
+    Logger.log('La hoja "VIGENTE" no existe.');
+    return;
+  }
+
+  const lastRow = sheet.getLastRow();
+  const rangeEnd = Math.min(lastRow, 899);
+
+  const columnsToSum = [
+    { column: 2, text: 'TOTAL AL DIA' },
+    { column: 6, text: 'TOTAL AL DIA' },
+    { column: 10, text: 'TOTAL AL DIA' },
+    { column: 14, text: 'TOTAL AL DIA' },
+    { column: 18, text: 'TOTAL AL DIA' },
+    { column: 22, text: 'TOTAL AL DIA' },
+    { column: 26, text: 'TOTAL AL DIA' },
+    { column: 30, text: 'TOTAL AL DIA' },
+    { column: 34, text: 'TOTAL AL DIA' },
+    { column: 38, text: 'TOTAL AL DIA' },
+    { column: 42, text: 'TOTAL AL DIA' },
+    { column: 46, text: 'TOTAL AL DIA' },
+    { column: 50, text: 'TOTAL AL DIA' }
+  ];
+
+  const today = new Date();
+
+  columnsToSum.forEach(function (colInfo) {
+    const col = colInfo.column;
+    const text = colInfo.text;
+
+    const range = sheet.getRange(1, col, rangeEnd, 1);
+    const values = range.getValues();
+
+    let sum = 0;
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i][0];
+      if (typeof value === 'number') {
+        sum += value;
+      }
+    }
+
+    let sumRow = 0;
+    for (let i = rangeEnd - 1; i >= 0; i--) {
+      if (values[i][0]) {
+        sumRow = i + 1;
+        break;
+      }
+    }
+
+    sumRow = Math.max(sumRow + 1, 7);
+
+    const totalRange = sheet.getRange(sumRow, col, 1, 3); // Extendemos el rango para incluir la tercera columna
+    sheet.getRange(sumRow, col).setValue(text);
+    sheet.getRange(sumRow, col + 1).setValue(sum);
+    sheet.getRange(sumRow, col + 2).setValue(today); // Establecemos la fecha en la tercera columna
+    totalRange.setBackground('#fff2cc');
+  });
+}
+
+
+
+
+
+function registrarModificaciones() {
+  var today = new Date();
+  var startOfDay = new Date(today.setHours(0, 0, 0, 0));
+  var endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+  var logEntries = getAuditLogForDay(startOfDay, endOfDay);
+
+  if (logEntries.length > 0) {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Historial");
+
+    if (!sheet) {
+      sheet = ss.insertSheet("Historial");
+      sheet.appendRow(["Fecha", "Descripción"]);
+    }
+
+    logEntries.forEach(function (entry) {
+      sheet.appendRow([entry.date, entry.description]);
+    });
+
+    Logger.log('Se registraron ' + logEntries.length + ' modificaciones.');
+  } else {
+    Logger.log('No se encontraron modificaciones el día actual.');
+  }
+}
+
+function getAuditLogForDay(startTime, endTime) {
+  var logEntries = [];
+
+  var events = getDriveAuditEvents(startTime, endTime);
+
+  if (events.length > 0) {
+    events.forEach(function (event) {
+      logEntries.push({
+        date: new Date(event.timestamp),
+        description: 'Usuario: ' + event.actor.user +
+          ', Acción: ' + event.eventType +
+          ', Archivo: ' + event.primaryUsername
+      });
+    });
+  } else {
+    Logger.log('No se encontraron eventos de auditoría para el día ' + startTime.toLocaleDateString());
+  }
+
+  return logEntries;
+}
+
+function getDriveAuditEvents(startTime, endTime) {
+  var results = [];
+  var pageToken;
+  var pageSize = 100; // Cantidad de eventos a recuperar por página
+
+  do {
+    var response = retrievePageOfLogs(pageToken, startTime, endTime, pageSize);
+
+    if (response.activities) {
+      response.activities.forEach(function (activity) {
+        results.push(activity);
+      });
+    }
+
+    pageToken = response.nextPageToken;
+  } while (pageToken);
+
+  return results;
+}
+
+function retrievePageOfLogs(pageToken, startTime, endTime, pageSize) {
+  var optionalArgs = {
+    applicationName: 'drive',
+    eventName: 'edit',
+    filters: 'owner==me',
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    maxResults: pageSize
+  };
+
+  if (pageToken) {
+    optionalArgs.pageToken = pageToken;
+  }
+
+  try {
+    var response = AdminReports.Activities.list('all', optionalArgs);
+    return response;
+  } catch (e) {
+    Logger.log('Error al obtener eventos de auditoría: ' + e);
+    return {
+      activities: []
+    };
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+function eliminarProteccionesDeHoja() {
+  var hojaCalculo = SpreadsheetApp.getActiveSpreadsheet();
+
+  var nombreHoja = 'VIGENTE';
+
+  var hoja = hojaCalculo.getSheetByName(nombreHoja);
+
+  if (hoja) {
+    var protecciones = hoja.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+
+    for (var i = 0; i < protecciones.length; i++) {
+      protecciones[i].remove();
+    }
+
+    var proteccionHoja = hoja.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+    for (var j = 0; j < proteccionHoja.length; j++) {
+      proteccionHoja[j].remove();
+    }
+
+    Logger.log('Todas las protecciones de la hoja "' + nombreHoja + '" han sido eliminadas.');
+  } else {
+    Logger.log('La hoja "' + nombreHoja + '" no existe.');
+  }
+}
+
+
+
+function VloqueaUsuarios() {
+  eliminarProteccionesDeHoja()
+  var hojaActiva = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var nombrehojadeseada = "VIGENTE";
+
+  var correoAdicional = "pagos6@kabzo.org"; // Correo que también podrá editar
+
+  var rangosABloquear = [
+    { startCol: 2, endCol: 4 },
+    { startCol: 6, endCol: 8 },
+    { startCol: 10, endCol: 12 },
+    { startCol: 14, endCol: 16 },
+    { startCol: 18, endCol: 20 },
+    { startCol: 22, endCol: 24 },
+    { startCol: 26, endCol: 28 },
+    { startCol: 30, endCol: 32 },
+    { startCol: 34, endCol: 36 },
+    { startCol: 38, endCol: 40 },
+    { startCol: 42, endCol: 44 },
+    { startCol: 46, endCol: 48 },
+    { startCol: 50, endCol: 52 }
+  ];
+
+  var filasEspecificas = [
+    { startRow: 3, endRow: 6 },
+    { startRow: 900, endRow: 900 },   // antes 800
+    { startRow: 1032, endRow: 1032 }  // antes 932-933
+  ];
+
+
+  if (hojaActiva.getName() == nombrehojadeseada) {
+    rangosABloquear.forEach(function (rango) {
+      var startCol = rango.startCol;
+      var endCol = rango.endCol;
+
+      var startRow = 7;
+      var endRow = encontrarUltimaFilaConDatosEnRango(hojaActiva, startRow, 899, startCol, endCol);
+
+      var rangeToProtect = hojaActiva.getRange(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
+      var protection = rangeToProtect.protect().setDescription('🚫 | SOLO PROPIETARIO');
+
+      var owner = SpreadsheetApp.getActiveSpreadsheet().getOwner().getEmail();
+
+      // Quitar todos los editores excepto propietario
+      var editors = protection.getEditors();
+      editors.forEach(function (editor) {
+        if (editor.getEmail() != owner) {
+          protection.removeEditor(editor);
+        }
+      });
+
+      // Agregar el correo adicional como editor permitido
+      protection.addEditor(correoAdicional);
+
+      if (protection.canDomainEdit()) {
+        protection.setDomainEdit(false);
+      }
+    });
+
+    filasEspecificas.forEach(function (fila) {
+      var startRow = fila.startRow;
+      var endRow = fila.endRow;
+      var startCol = 1;
+      var endCol = hojaActiva.getLastColumn();
+
+      var rangeToProtect = hojaActiva.getRange(startRow, startCol, endRow - startRow + 1, endCol);
+      var protection = rangeToProtect.protect().setDescription('🚫 | SOLO PROPIETARIO');
+
+      var owner = SpreadsheetApp.getActiveSpreadsheet().getOwner().getEmail();
+
+      var editors = protection.getEditors();
+      editors.forEach(function (editor) {
+        if (editor.getEmail() != owner) {
+          protection.removeEditor(editor);
+        }
+      });
+
+      // Agregar el correo adicional
+      protection.addEditor(correoAdicional);
+
+      if (protection.canDomainEdit()) {
+        protection.setDomainEdit(false);
+      }
+    });
+  }
+}
+
+
+
+// Función auxiliar para encontrar la última fila con datos en un rango dado
+function encontrarUltimaFilaConDatosEnRango(hoja, startRow, endRow, startCol, endCol) {
+  var data = hoja.getRange(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1).getValues();
+  for (var i = data.length - 1; i >= 0; i--) {
+    for (var j = 0; j < data[i].length; j++) {
+      if (data[i][j] !== "") {
+        return startRow + i;
+      }
+    }
+  }
+  return startRow;
+}
+
+
+function encontrarUltimaFilaConDatosEnRango(hoja, startRow, endRow, startCol, endCol) {
+  var data = hoja.getRange(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1).getValues();
+  for (var i = data.length - 1; i >= 0; i--) {
+    for (var j = 0; j < data[i].length; j++) {
+      if (data[i][j] != "") {
+        return i + startRow;
+      }
+    }
+  }
+  return startRow; // Devuelve startRow si no se encontraron datos
+}
+
+
+
+function ejecutarCodigo() {
+  var hoy = new Date().getDay();
+
+  if (hoy >= 1 && hoy <= 5) {
+    SumaTotal()
+    VloqueaUsuarios()
+  } else {
+    Logger.log("No se ejecuta el código, hoy es fin de semana.");
+  }
+}
