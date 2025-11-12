@@ -1,0 +1,127 @@
+<!-- https://static.vecteezy.com/system/resources/previews/020/952/293/non_2x/chicken-hen-standing-free-png.png -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+       input {
+         width:100%;
+         font-size: 1.2em;
+         color:white;
+         background-color:#C59A4A;
+         margin-top:3px;
+         margin-bottom:10px;
+         border-radius:10px;
+         font-weight:bold;
+       }
+       body {
+         color:black;
+         font-size:0.8em;
+         background-color:#FFFFFF;
+         font-family:sans-serif;
+         font-weight:bold;
+       }
+       button {
+        padding: 10px;
+        font-size:1.0em;
+        border-radius:15px;
+         font-weight:bold;
+       }
+       select{
+         color:white;
+         background-color:#C59A4A;
+         border-radius:10px;
+         max-width:400px;
+         font-weight:bold;
+       }
+       container {
+         max-width:800px;
+         margin:auto;
+         padding-top:50px;
+       }
+       .modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background:#FFFFFF;
+        }
+
+        .modal-content {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background:#FFFFFF;
+          padding: 2rem;
+          border-radius: 8px;
+          text-align: center;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="modal">
+      <div class="modal-content">
+      <center>
+        <table>
+          <tr>
+            <td>
+              <center>
+              <span>Nombre del Colaborador:</span><br>
+              <select id="name" name="name"></select><br>
+              </center>
+            </td>
+          </tr>
+        </table>
+      </center>
+      <center>
+        <button class="subs">Quitar</button>
+      </center>
+      </div>
+    </div>
+    <script>
+       google.script.run.withSuccessHandler(function(nombres) {
+        const select = document.getElementById('name');
+
+        nombres.forEach(function(nombre) {
+          const option = document.createElement('option');
+          option.value = nombre;
+          option.textContent = nombre;
+          select.appendChild(option);
+        });
+      }).obtenerNombres();
+
+      var allInputs = document.querySelectorAll("input");
+      var allSelects = document.querySelectorAll("select");
+      var s = document.querySelector("input[name=start]");
+      document.querySelector(".subs").addEventListener("click", formSubmit);
+      s.value = viewDateStart;
+
+      function formSubmit(e){
+        e.preventDefault();
+        var holder = {};
+        allInputs.forEach(function (el){
+          holder[el.getAttribute("name")] = el.value;
+        })
+        allSelects.forEach(function (el){
+          holder[el.getAttribute("name")] = el.value;
+        })
+        if (holder.calid != ""){
+          google.script.run.withSuccessHandler(success).removeColab(holder);
+          google.script.host.close();
+        }
+        else {
+          alert("Missing id.");
+        }
+      }
+      function success(data){
+        console.log(data);
+        document.querySelector("input[name=start]").value = "";
+        document.querySelector(".message").innerHTML = "Colaborador Quitado "+data.colab;
+        google.script.host.close();
+      }
+    </script>
+  </body>
+</html>
