@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+       input {
+         width:100%;
+         font-size: 1.2em;
+         color:white;
+         background-color:#C59A4A;
+         margin-top:3px;
+         margin-bottom:10px;
+         border-radius:10px;
+         font-weight:bold;
+       }
+       body {
+         color:black;
+         font-size:0.8em;
+         background-color:#FFFFFF;
+         font-family:sans-serif;
+         font-weight:bold;
+       }
+       button {
+        padding: 10px;
+        font-size:1.0em;
+        border-radius:15px;
+        font-weight:bold;
+       }
+       select{
+         color:white;
+         background-color:#C59A4A;
+         border-radius:10px;
+         max-width:400px;
+         font-weight:bold;
+       }
+       container {
+         max-width:800px;
+         margin:auto;
+         padding-top:50px;
+         font-weight:bold;
+       }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="message"></div>
+      <center>
+      <table>
+        <tr>
+          <td>
+            <label for="quienSol">Quién Solicita?:</label><br>
+            <select name="quienSol" id="quienSol">
+              <option value=" "> </option>
+              <option value="ALEXA_BANDALA">ALEXA_BANDALA</option>
+              <option value="ALONDRA_MARIBEL">ALONDRA_MARIBEL</option>
+              <option value="ANGELES_TREVIÑO">ANGELES_TREVIÑO</option>
+              <option value="AZAEL_RANGEL">AZAEL_RANGEL</option>
+              <option value="BRENDA_SALDIVAR">BRENDA_SALDIVAR</option>
+              <option value="CARLOS_CAVAZOS">CARLOS_CAVAZOS</option>
+              <option value="CEO_A">CEO_A</option>
+              <option value="CEO_AR">CEO_AR</option>
+              <option value="CEO_E">CEO_E</option>
+              <option value="EMELY_CARMONA">EMELY_CARMONA</option>
+              <option value="EMILIO_TORRES">EMILIO_TORRES</option>
+              <option value="EVAMARIA_SUAREZ">EVAMARIA_SUAREZ</option>
+              <option value="FERNANDO_SALDAÑA">FERNANDO_SALDAÑA</option>
+              <option value="GABRIELA_GONZALEZ">GABRIELA_GONZALEZ</option>
+              <option value="GABRIELA_LEAL">GABRIELA_LEAL</option>
+              <option value="ISAIRA_MORANTES">ISAIRA_MORANTES</option>
+              <option value="JORGE_MORAN">JORGE_MORAN</option>
+              <option value="JUAN_BAUTISTA">JUAN_BAUTISTA</option>
+              <option value="KEVIN_MORENO">KEVIN_MORENO</option>
+              <option value="PERLA_ESPINOZA">PERLA_ESPINOZA</option>
+              <option value="SAMANTHA_REYNA">SAMANTHA_REYNA</option>
+              <option value="SARAI_BELLO">SARAI_BELLO</option>
+              <option value="SERGIO_HERNANDEZ">SERGIO_HERNANDEZ</option>
+              <option value="SERGIO_SALAS">SERGIO_SALAS</option>
+              <option value="YESSICA_CAVAZOS">YESSICA_CAVAZOS</option>
+            </select><br><br>
+          </td>
+          <td>
+            <label for="dptoSol">Dpto Solicitante:</label><br>
+            <select name="dptoSol" id="dptoSol">
+              <option value=" "> </option>
+              <option value="AFILIACIONES">AFILIACIONES</option>
+              <option value="AGENDA_EJECUTIVA">AGENDA_EJECUTIVA</option>
+              <option value="BANCOS">BANCOS</option>
+              <option value="CONTABILIDAD">CONTABILIDAD</option>
+              <option value="CRÉDITO_Y_COBRANZA">CRÉDITO_Y_COBRANZA</option>
+              <option value="DOMICILIOS">DOMICILIOS</option>
+              <option value="FACTURACIÓN">FACTURACIÓN</option>
+              <option value="JURÍDICO">JURÍDICO</option>
+              <option value="LOGÍSTICA">LOGÍSTICA</option>
+              <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+              <option value="OPERACIÓN">OPERACIÓN</option>
+              <option value="PERSONAL_DOMESTICO">PERSONAL_DOMESTICO</option>
+              <option value="PRESUPUESTOS">PRESUPUESTOS</option>
+              <option value="PRODUCCIONES">PRODUCCIONES</option>
+              <option value="PROYECTOS">PROYECTOS</option>
+              <option value="RECURSOS_HUMANOS">RECURSOS_HUMANOS</option>
+              <option value="SEGURIDAD">SEGURIDAD</option>
+              <option value="SISTEMAS">SISTEMAS</option>
+              <option value="TESORERÍA">TESORERÍA</option>
+              <option value="VERIFICACIÓN">VERIFICACIÓN</option>
+            </select><br><br>
+          </td>
+        </tr>
+      </table>
+      </center>
+      <center>
+      <table>
+        <tr>
+          <td>
+            <label for="dondeAplica">Área Donde Aplica:</label><br>
+            <select name="dondeAplica" id="dondeAplica">
+              <option value=" "> </option>
+              <option value="AFILIACIONES">AFILIACIONES</option>
+              <option value="AGENDA CEO_A">AGENDA CEO_A</option>
+              <option value="AGENDA DESPACHO">AGENDA DESPACHO</option>
+              <option value="AGENDA_EJECUTIVA">AGENDA_EJECUTIVA</option>
+              <option value="ASEGURMANIENTO DE CALIDAD">ASEGURMANIENTO DE CALIDAD</option>
+              <option value="BANCOS">BANCOS</option>
+              <option value="CEOS">CEOS</option>
+              <option value="CONTABILIDAD">CONTABILIDAD</option>
+              <option value="CRÉDITO_Y_COBRANZA">CRÉDITO_Y_COBRANZA</option>
+              <option value="DESARROLLO">DESARROLLO</option>
+              <option value="DIRECCION GRAL">DIRECCION GRAL</option>
+              <option value="DISEÑO">DISEÑO</option>
+              <option value="DOMICILIOS">DOMICILIOS</option>
+              <option value="ENTREGAS">ENTREGAS</option>
+              <option value="FACTURACIÓN">FACTURACIÓN</option>
+              <option value="JURÍDICO">JURÍDICO</option>
+              <option value="LOGÍSTICA">LOGÍSTICA</option>
+              <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+              <option value="MONITOREO">MONITOREO</option>
+              <option value="OPERACIÓN">OPERACIÓN</option>
+              <option value="OPTIMIZACION">OPTIMIZACION</option>
+              <option value="PERSONAL_DOMESTICO">PERSONAL_DOMESTICO</option>
+              <option value="PRESUPUESTOS">PRESUPUESTOS</option>
+              <option value="PRODUCCIONES">PRODUCCIONES</option>
+              <option value="PROPIEDADES">PROPIEDADES</option>
+              <option value="PROYECTOS">PROYECTOS</option>
+              <option value="RECURSOS_HUMANOS">RECURSOS_HUMANOS</option>
+              <option value="SEGURIDAD">SEGURIDAD</option>
+              <option value="SISTEMAS">SISTEMAS</option>
+              <option value="TESORERÍA GRAL">TESORERÍA GRAL</option>
+              <option value="VERIFICACIÓN">VERIFICACIÓN</option>
+            </select><br><br>
+          </td>
+        </tr>
+      </table>
+      </center>
+      <center>
+        <span>Nombre del Colaborador:</span><br>
+        <input type="text" name="colab" value=" "><br>
+      </center>
+      <center>
+        <span>Sueldo Base (Semanal):</span><br>
+        <input type="text" name="sueldoBase" value=" "><br>
+      </center>
+      <center>
+      <table>
+        <tr>
+          <td>
+            <span>Fecha de Ingreso:</span><br>
+            <input type="date" id="fechaIngreso" name="fechaIngreso"><br><br>
+          </td>
+        </tr>
+      </table>
+      </center>
+      <center>
+        <button class="subs">Agregar</button>
+      </center>
+    <script>
+      // var now = new Date();
+      // var curDate = now.getTime() - now.getTimezoneOffset() * 60000;
+      var curDate = new Date().toISOString().split('T')[0];
+      // var viewDateStart = new Date(curDate).toISOString().substring(0,11)+"11:00:00";
+      var viewDateStart = new Date(curDate).toISOString().substring(0,10);
+      document.getElementById('fechaIngreso').value = viewDateStart;
+      var allInputs = document.querySelectorAll("input");
+      var allSelects = document.querySelectorAll("select");
+      var s = document.querySelector("input[name=start]");
+      document.querySelector(".subs").addEventListener("click", formSubmit);
+      // s.value = viewDateStart;
+
+      function formSubmit(e){
+        e.preventDefault();
+        var holder = {};
+        allInputs.forEach(function (el){
+          holder[el.getAttribute("name")] = el.value;
+        })
+        allSelects.forEach(function (el){
+          holder[el.getAttribute("name")] = el.value;
+        })
+        if (holder.calid != ""){
+          google.script.run.withSuccessHandler(
+            () => alert("Fila agregada correctamente"))
+            .withFailureHandler(err => {
+              alert("Error al ejecutar la función.\n\nEs posible que necesites otorgar permisos.\nPor favor abre el editor de Apps Script y ejecuta la función 'Permisos'.");
+              console.error(err);
+            }
+          ).addColab(holder);
+          google.script.host.close();
+        }
+        else {
+          alert("Missing id.");
+        }
+      }
+      function success(data){
+        console.log(data);
+        document.querySelector("input[name=start]").value = "";
+        document.querySelector(".message").innerHTML = "Colaborador Agregado "+data.colab;
+        google.script.host.close();
+      }
+    </script>
+  </body>
+</html>
