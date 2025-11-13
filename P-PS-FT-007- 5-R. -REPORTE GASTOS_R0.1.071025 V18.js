@@ -43,16 +43,49 @@ function copiarYpegarDatos_FT12(hojaOrigen, hojaDestino, rangoOrigen, columnaIni
 function copiarFormatoAGoogleDrive() {
   try {
     copiarTemporalAlMaster();//copiado G1 al concentrado.
-    var hojaDeCalculo = SpreadsheetApp.getActiveSpreadsheet();// Obtén la hoja de cálculo activa
-    var currentDate = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
-    var nombreArchivo = hojaDeCalculo.getName();// Obtén el nombre de la hoja de cálculo
-    var nuevaHojaDeCalculo = hojaDeCalculo.copy('[Nuevo Vacio] ' + nombreArchivo + currentDate); // Crea una nueva hoja de cálculo
-    var idNuevoArchivo = nuevaHojaDeCalculo.getId();// Obtén la ID del archivo de la nueva hoja de cálculo
-    var nuevoNombre = '[Nuevo Vacio] ' + nombreArchivo; // Cambia el nombre del archivo copiado
-    DriveApp.getFileById(idNuevoArchivo).setName(nuevoNombre); // Puedes ajustar el nuevo nombre según tus necesidades
-    var carpetaDestino = DriveApp.getFolderById('1yjigewfWWJTeOY2irxg8FOyVOc8OV6sI'); // Reemplaza 'ID_DE_LA_CARPETA' con la ID de la carpeta destino 10HcEi2RlaT1U_BwBsWzcEzW0JBJfQb8q //carpeta mia: 1NB8_H0vuuGaxXzn0n2Wi1FlBqDPYxc7e
+    
+    var hojaDeCalculo = SpreadsheetApp.getActiveSpreadsheet(); // Archivo activo
+    //var currentDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd"); // Fecha actual
+    //dia/mes /año
+    var currentDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy"); // Fecha actual
+    var nombreArchivo = hojaDeCalculo.getName(); // Nombre actual del archivo
+
+    // Buscar la posición de "/" en el nombre
+    var indice = nombreArchivo.indexOf("/");
+    var nuevoNombreArchivo = nombreArchivo;
+
+    if (indice !== -1) {
+      // Mantener todo antes del "/" y lo que sigue después del espacio siguiente a la fecha vieja
+      // Detectar el inicio de la parte de fecha (justo después de "/")
+      var antes = nombreArchivo.substring(0, indice + 1); // Incluye el "/"
+      
+      // Buscar el siguiente espacio después de la fecha vieja (si existe)
+      var resto = nombreArchivo.substring(indice + 1);
+      var espacioDespuesDeFecha = resto.indexOf(" ");
+      
+      if (espacioDespuesDeFecha !== -1) {
+        // Reemplazar solo la parte de fecha vieja (lo que estaba entre "/" y el espacio)
+        var despues = resto.substring(espacioDespuesDeFecha); // Conserva todo lo que está después del espacio
+        nuevoNombreArchivo = antes + currentDate + despues;
+      } else {
+        // Si no hay espacio, simplemente coloca la fecha al final
+        nuevoNombreArchivo = antes + currentDate;
+      }
+    }
+
+    // Crear copia con el nuevo nombre
+    var nuevoNombreFinal = '[Nuevo Vacio] ' + nuevoNombreArchivo;
+    var nuevaHojaDeCalculo = hojaDeCalculo.copy(nuevoNombreFinal);
+
+    var idNuevoArchivo = nuevaHojaDeCalculo.getId();
+
+    var carpetaDestino = DriveApp.getFolderById('1yjigewfWWJTeOY2irxg8FOyVOc8OV6sI');
+
+    //mover a la carpeta correspondiente:
     DriveApp.getFileById(idNuevoArchivo).moveTo(carpetaDestino); // Mueve el nuevo archivo a la carpeta de destino
-    Logger.log('Copia de formato creada y guardada en la carpeta destino. Nombre del archivo: ' + nuevoNombre); // Registra el nombre del archivo en el registro
+
+    Logger.log("Nuevo nombre: " + nuevoNombreFinal);
+    Logger.log("ID nuevo archivo: " + idNuevoArchivo);
 
     /*g1 Y g1 FONDEO DE TARJETAS */
     var hojasDatosFT = [
@@ -73,7 +106,6 @@ function copiarFormatoAGoogleDrive() {
     Logger.log('Error: ' + error.toString());
   }
 }
-
 
 function limpiarCeldasEnHojas(nuevaHojaDeCalculo) {
   var hojas = [
