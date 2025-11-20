@@ -303,6 +303,12 @@ function copiarTemporalAlMaster() {//copiado y eliminado
   var hojaOrigen = libroOrigen.getSheetByName("G1");
   var hojaDestino = libroDestino.getSheetByName("ACUMULADO 2025");
 
+  // Obtener la fecha de ayer
+  var ayer = new Date();
+  // Restar 1 día (24 horas)
+  ayer.setDate(ayer.getDate() - 1);
+  var fomateoAyer = Utilities.formatDate(ayer, Session.getScriptTimeZone(), 'dd/MM/yy');
+    
   // Obtener la fecha actual formateada
   var today = new Date();
   var fomateoToday = Utilities.formatDate(today, Session.getScriptTimeZone(), 'dd/MM/yy');
@@ -321,7 +327,7 @@ function copiarTemporalAlMaster() {//copiado y eliminado
       var fomateoFecha = Utilities.formatDate(dataFecha, Session.getScriptTimeZone(), 'dd/MM/yy');
 
       // Verificar si coincide con la fecha de hoy
-      if (fomateoFecha === fomateoToday) { //27 a 28
+      if (fomateoFecha === fomateoToday || fomateoFecha === fomateoAyer) { //27 a 28
         // Verificar condiciones en la columna Z (índice 26)
         if (datos[i][28] === "PAGADO Y COMPROBANTE EN CARPETA" || datos[i][28] === "ALTA DE BENEFICIARIO" || datos[i][28] === "CANCELADO" || datos[i][28] === "EN PROCESO" || datos[i][28] === "PENDIENTE" || datos[i][28] === "RECHAZADO") {
           filasParaPegar.push(datos[i]); // Añadir fila para pegar
