@@ -147,3 +147,20 @@
   "verificador11@kabzo.org>"; "PEDRO_SUAREZ_BARRON";
   ""
 )
+
+// Switch para determinar tiempo del dia
+=SWITCH(E2;
+  "8 AM";"MAÑANA";
+  "9 AM";"MAÑANA";
+  "10 AM";"MAÑANA";
+  "11 AM";"MAÑANA";
+  "12 PM";"MEDIO DIA";
+  "1 PM";"MEDIO DIA";
+  "2 PM";"MEDIO DIA";
+  "3 PM";"MEDIO DIA";
+  "4 PM";"TARDE";
+  "5 PM";"TARDE";
+  "6 PM";"TARDE";
+  "7 PM";"TARDE";
+  "FUERA DE HORARIO"
+)
