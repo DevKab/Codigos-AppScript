@@ -294,24 +294,29 @@ function copiarTemporarG1() { //copia y elimina
   }
 }
 
-////
+////25/11/2025
 function copiarTemporalAlMaster() {//copiado y eliminado
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet(); // G1 = 5R
-  //var libroDestino = SpreadsheetApp.openById('1MMRqJ_9i-yUKYUxyPsiEx_NM5HH2Nr0-8oq4oqc5Ol8'); // Master idTesteoV1 = 1N12NZmKe0JjWuFVtww2C4Xm52E9XMZyRgx00vQXvRL0
+  //var libroDestino = SpreadsheetApp.openById('12hRotSQGfgQ6dIACYel2PJxDsZKhDueX2m9mZma52vA'); // Master idTesteoV1 = 1N12NZmKe0JjWuFVtww2C4Xm52E9XMZyRgx00vQXvRL0
   var libroDestino = SpreadsheetApp.openById('1UVMKfn_zoAX2PzqTWSfzt_Ln8jZs_sRLddadIimK28E'); // Master idTesteoV1 = 1N12NZmKe0JjWuFVtww2C4Xm52E9XMZyRgx00vQXvRL0
 
   var hojaOrigen = libroOrigen.getSheetByName("G1");
   var hojaDestino = libroDestino.getSheetByName("ACUMULADO 2025");
 
-  // Obtener la fecha de ayer
+   // Obtener la fecha de ayer
   var ayer = new Date();
-  // Restar 1 día (24 horas)
-  ayer.setDate(ayer.getDate() - 1);
+  if(ayer.getDay() === 1 || ayer.getDay() === 5){//Viernes o lunes
+    // Restar 1 día (24 horas)
+    ayer.setDate(ayer.getDate() - 3);
+  } else if(ayer.getDay() === 2 || ayer.getDay() === 3 || ayer.getDay() === 4){//Martes, Miercoles, Jueves
+    ayer.setDate(ayer.getDate() - 1);
+  }
   var fomateoAyer = Utilities.formatDate(ayer, Session.getScriptTimeZone(), 'dd/MM/yy');
-    
+
   // Obtener la fecha actual formateada
   var today = new Date();
   var fomateoToday = Utilities.formatDate(today, Session.getScriptTimeZone(), 'dd/MM/yy');
+
 
   // Obtener los valores de la hoja origen
   var datos = hojaOrigen.getRange("D5:AM1536").getValues();// de A:AO a A:AP
@@ -326,14 +331,17 @@ function copiarTemporalAlMaster() {//copiado y eliminado
     if (dataFecha instanceof Date && !isNaN(dataFecha.getTime())) {
       var fomateoFecha = Utilities.formatDate(dataFecha, Session.getScriptTimeZone(), 'dd/MM/yy');
 
-      // Verificar si coincide con la fecha de hoy
-      if (fomateoFecha === fomateoToday || fomateoFecha === fomateoAyer) { //27 a 28
-        // Verificar condiciones en la columna Z (índice 26)
-        if (datos[i][28] === "PAGADO Y COMPROBANTE EN CARPETA" || datos[i][28] === "ALTA DE BENEFICIARIO" || datos[i][28] === "CANCELADO" || datos[i][28] === "EN PROCESO" || datos[i][28] === "PENDIENTE" || datos[i][28] === "RECHAZADO") {
-          filasParaPegar.push(datos[i]); // Añadir fila para pegar
-          //filasParaEliminar.push(i + 1); // Guardar el índice de la fila para eliminar (+1 porque es 1-based)
+      // Verificar si coincide con la fecha de hoy y la de ayer
+     // if (fomateoToday.getDay() === 1 || fomateoToday.getDay() === 2 || fomateoToday.getDay() === 3 || fomateoToday.getDay() === 4 || fomateoToday.getDay() === 5) { // 1=Lun, 5=Vie.
+     //para un objeto.
+      
+        if (fomateoFecha === fomateoToday || fomateoFecha === fomateoAyer) { //27 a 28
+          // Verificar condiciones en la columna Z (índice 26)
+          if (datos[i][28] === "PAGADO Y COMPROBANTE EN CARPETA") {
+            filasParaPegar.push(datos[i]); // Añadir fila para pegar
+          }
         }
-      }
+      
     }
   }
 
@@ -346,6 +354,9 @@ function copiarTemporalAlMaster() {//copiado y eliminado
   } else {
     Logger.log("No se encontraron filas que cumplan las condiciones para copiar.");
   }
+}
+
+
 
 /////////////Gustavo Papeletas///////////
 const SSID = SpreadsheetApp.getActiveSpreadsheet().getId();
