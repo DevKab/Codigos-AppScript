@@ -294,11 +294,10 @@ function copiarTemporarG1() { //copia y elimina
   }
 }
 
-////25/11/2025
-function copiarTemporalAlMaster() {//copiado y eliminado
+////10/12/2025
+function copiarTemporalAlMasterV1() {//copiado y eliminado
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet(); // G1 = 5R
-  //var libroDestino = SpreadsheetApp.openById('12hRotSQGfgQ6dIACYel2PJxDsZKhDueX2m9mZma52vA'); // Master idTesteoV1 = 1N12NZmKe0JjWuFVtww2C4Xm52E9XMZyRgx00vQXvRL0
-  var libroDestino = SpreadsheetApp.openById('1UVMKfn_zoAX2PzqTWSfzt_Ln8jZs_sRLddadIimK28E'); // Master idTesteoV1 = 1N12NZmKe0JjWuFVtww2C4Xm52E9XMZyRgx00vQXvRL0
+  var libroDestino = SpreadsheetApp.openById('1VkGWbBthDKEgceEvuN6dwBgf46h7_XbtC3eQqZ1B2ZA'); // Master idTesteoV1 = 1N12NZmKe0JjWuFVtww2C4Xm52E9XMZyRgx00vQXvRL0
 
   var hojaOrigen = libroOrigen.getSheetByName("G1");
   var hojaDestino = libroDestino.getSheetByName("ACUMULADO 2025");
@@ -319,22 +318,19 @@ function copiarTemporalAlMaster() {//copiado y eliminado
 
 
   // Obtener los valores de la hoja origen
-  var datos = hojaOrigen.getRange("D5:AM1536").getValues();// de A:AO a A:AP
+  var datos = hojaOrigen.getRange("D5:AN1536").getValues();// de A:AO a A:AP
 
   // Preparar un arreglo para las filas que cumplen las condiciones
   var filasParaPegar = [];
 
   for (var i = 0; i < datos.length; i++) {
-    var dataFecha = datos[i][29]; // Columna AB (índice 27) //28 a 29
+    //var dataFecha = datos[i][29]; // Columna AB (índice 27) //28 a 29
+    var dataFecha = datos[i][36]; // Columna AB (índice 27) //28 a 29
 
     // Validar si el dato en la columna AB es una fecha válida
     if (dataFecha instanceof Date && !isNaN(dataFecha.getTime())) {
       var fomateoFecha = Utilities.formatDate(dataFecha, Session.getScriptTimeZone(), 'dd/MM/yy');
-
-      // Verificar si coincide con la fecha de hoy y la de ayer
-     // if (fomateoToday.getDay() === 1 || fomateoToday.getDay() === 2 || fomateoToday.getDay() === 3 || fomateoToday.getDay() === 4 || fomateoToday.getDay() === 5) { // 1=Lun, 5=Vie.
-     //para un objeto.
-      
+        //if (fomateoFecha === fomateoToday) { //27 a 28
         if (fomateoFecha === fomateoToday || fomateoFecha === fomateoAyer) { //27 a 28
           // Verificar condiciones en la columna Z (índice 26)
           if (datos[i][28] === "PAGADO Y COMPROBANTE EN CARPETA") {
@@ -345,18 +341,72 @@ function copiarTemporalAlMaster() {//copiado y eliminado
     }
   }
 
-  // Pegar todas las filas que cumplen las condiciones en la hoja destino
   if (filasParaPegar.length > 0) {
-    var ultimaFilaDestino = hojaDestino.getLastRow();
-    hojaDestino.getRange(ultimaFilaDestino + 1, 1, filasParaPegar.length, filasParaPegar[0].length)
+    var ultimaFilaDestino = ultimaFilaNoVaciaV1(hojaDestino);
+
+
+    //var guardar = hoja.getRange("A1:AJ100").getValues(); // AJ = columna 36
+
+    for (var i = 0; i < filasParaPegar.length; i++) {
+      if (filasParaPegar[i][1] instanceof Date) {
+        filasParaPegar[i][1] = Utilities.formatDate(
+          filasParaPegar[i][1],
+          Session.getScriptTimeZone(),
+          "dd/MM/yyyy"
+        );
+      }
+      
+      if (filasParaPegar[i][29] instanceof Date) {
+        filasParaPegar[i][29] = Utilities.formatDate(
+          filasParaPegar[i][29],
+          Session.getScriptTimeZone(),
+          "dd/MM/yyyy"
+        );
+      }
+      if (filasParaPegar[i][36] instanceof Date) {
+        filasParaPegar[i][36] = Utilities.formatDate(
+          filasParaPegar[i][36],
+          Session.getScriptTimeZone(),
+          "dd/MM/yyyy"
+        );
+      }
+      
+    }
+
+  hojaDestino.getRange(ultimaFilaDestino + 1, 1, filasParaPegar.length, filasParaPegar[0].length)
       .setValues(filasParaPegar);
+
+
+    
+
     Logger.log(filasParaPegar.length + " filas copiadas a la hoja destino.");
-  } else {
+  }else {
     Logger.log("No se encontraron filas que cumplan las condiciones para copiar.");
   }
 }
 
 
+function ultimaFilaNoVaciaV1(hoja) {
+ // const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("SOLICITUDES 2024");
+  if (!hoja) {
+    Logger.log("La hoja "+ hoja + " no existe.");
+    return;
+  }
+  
+  const columna = hoja.getRange("B:B").getValues(); // Obtiene todos los valores de la columna B
+  let ultimaFila = 0;
+
+  // Iterar desde el final hacia arriba para encontrar la última fila con datos
+  for (let i = columna.length - 1; i >= 0; i--) {
+    if (columna[i][0] !== "") {
+      ultimaFila = i + 1; // +1 porque los índices comienzan en 0
+      break;
+    }
+  }
+
+  return ultimaFila;
+ // Logger.log(`La última fila con datos en la columna A de 'solicitudes' es: ${ultimaFila}`);
+}
 
 /////////////Gustavo Papeletas///////////
 const SSID = SpreadsheetApp.getActiveSpreadsheet().getId();
