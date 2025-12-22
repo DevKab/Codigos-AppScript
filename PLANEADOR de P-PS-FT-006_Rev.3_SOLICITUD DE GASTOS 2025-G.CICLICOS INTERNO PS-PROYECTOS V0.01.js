@@ -1,128 +1,143 @@
-//boton que esta con un activador
-function ciclicosBoton(){//10/10/2025
+function ciclicosBoton() {
   try {
+    // Optimizado: A1 estaba duplicado — ya no.
     var hojasDatos = [
-      { link: "1havjYfhnJ-Qe5DyDg0duLPAX7BN7veffhysscsG9jPc", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A6", nombreHojaO: "Base de Datos Despacho"},
-      { link: "1ngHul195CohXo7eFB6lvDOhgNxAP9pwOgKnt27th8UI", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A5", nombreHojaO: "Base de Datos Despacho"},//para despacho  A5
-      { link: "1lOQ7p4H4pfqpADV5pDQBFKLv-_Jaf9aS6OBjwi0zGos", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A4", nombreHojaO: "Base de Datos Despacho"},
-      { link: "1PaQdKfVk51UiMNnKVS-Jo0YiDSs3mU-76_zweQy1M6c", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A3", nombreHojaO: "Base de Datos Despacho"},
-      { link: "1CalZsgEqEhWPJGloUGBSZwUXz9uPaVK2VfwbvRQuTms", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A2", nombreHojaO: "Base de Datos Despacho"},// es nominas.
-      { link: "1HueYpVVHTSL6bJpBF8y_PEF-C5MGIt_o2wgPeYRJd7I", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A1", nombreHojaO: "Base de Datos Personal"},//para personal A1
-      { link: "1HueYpVVHTSL6bJpBF8y_PEF-C5MGIt_o2wgPeYRJd7I", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A1", nombreHojaO: "Base de Datos Despacho"},//para Despacho A1
-      { link: "18S6lqUMLJ07QB4QEWvh6Gppb7PSjEWnXPbhY57sbZhM", nombreHojaD: "S.Gastos CICLICOS INTERNO PS A0", nombreHojaO: "Base de Datos Despacho"}
+      //originales
+      { link: "1havjYfhnJ-Qe5DyDg0duLPAX7BN7veffhysscsG9jPc", destino: "S.Gastos CICLICOS INTERNO PS A6", origen: "Base de Datos Despacho" },
+      { link: "1ngHul195CohXo7eFB6lvDOhgNxAP9pwOgKnt27th8UI", destino: "S.Gastos CICLICOS INTERNO PS A5", origen: "Base de Datos Despacho" },
+      { link: "1lOQ7p4H4pfqpADV5pDQBFKLv-_Jaf9aS6OBjwi0zGos", destino: "S.Gastos CICLICOS INTERNO PS A4", origen: "Base de Datos Despacho" },
+      { link: "1PaQdKfVk51UiMNnKVS-Jo0YiDSs3mU-76_zweQy1M6c", destino: "S.Gastos CICLICOS INTERNO PS A3", origen: "Base de Datos Despacho" },
+      { link: "1CalZsgEqEhWPJGloUGBSZwUXz9uPaVK2VfwbvRQuTms", destino: "S.Gastos CICLICOS INTERNO PS A2", origen: "Base de Datos Despacho" },//modif 18/12/2025 nominas
+      { link: "1HueYpVVHTSL6bJpBF8y_PEF-C5MGIt_o2wgPeYRJd7I", destino: "S.Gastos CICLICOS INTERNO PS A1", origen: "Base de Datos Despacho" },//modif 18/12/2025 que no sean nominas
+      { link: "18S6lqUMLJ07QB4QEWvh6Gppb7PSjEWnXPbhY57sbZhM", destino: "S.Gastos CICLICOS INTERNO PS A0", origen: "Base de Datos Despacho" },
+      { link: "19fionVnXuVOe2Ex5WthuF5te0YrZbPz-HN8YvV9XwuA", destino: "S.Gastos Personales", origen: "Base de Datos Personal"}//agregar el 003 gastos personales.*/
     ];
 
     hojasDatos.forEach(function (hoja) {
       try {
-        envioInfoCiclico(hoja.link, hoja.nombreHojaD, hoja.nombreHojaO);
-      } catch (error) {
-        Logger.log(`Error procesando hoja con link ${hoja.link} y nombre Origen ${hoja.nombreHojaD} y nombre de la hoja Destino ${hoja.nombreHojaO}: ${error.message}`);
+        envioInfoCiclico_rapidoV3(hoja);
+      } catch (err) {
+        Logger.log(`❌ Error procesando ${hoja.destino}: ${err.message}`);
       }
     });
-  } catch (error) {
-    Logger.log(`Error general en limk12Archivos: ${error.message}`);
+
+  } catch (e) {
+    Logger.log("❌ Error general en ciclicosBoton: " + e.message);
   }
 }
 
-function envioInfoCiclico(link, nombreDestino, nombreOrigen) {
+function envioInfoCiclico_rapidoV3(hojaInfo) {
+
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
-  var hojaOrigen = libroOrigen.getSheetByName(nombreOrigen);
-  //var hojaOrigen = libroOrigen.getSheetByName("Planeador Despacho");
+  var hojaOrigen = libroOrigen.getSheetByName(hojaInfo.origen);
 
-  var datos = hojaOrigen.getRange("B:AC").getValues();
+  var ultimaFila = hojaOrigen.getLastRow();
+  if (ultimaFila < 2) return; // No hay datos
 
-  var libroDestino = SpreadsheetApp.openById(link);
-  var hojaDestino = libroDestino.getSheetByName(nombreDestino);
+  // Solo lee lo que existe
+  var datos = hojaOrigen.getRange(2, 2, ultimaFila - 1, 28).getValues();
 
-  var fecha = new Date();
-  var fechaFormateada = Utilities.formatDate(fecha, Session.getScriptTimeZone(), 'dd/MM/yy');
+  // Abrir UNA VEZ archivo de destino
+  var libroDestino = SpreadsheetApp.openById(hojaInfo.link);
+  var hojaDestino = libroDestino.getSheetByName(hojaInfo.destino);
 
-  var filasPegar = [];
+  var fechaHoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yy');
 
-  for (var i = 1; i < datos.length; i++) {
-    var fechaOrigen = datos[i][0];
-    if (fechaOrigen instanceof Date && !isNaN(fechaOrigen.getTime())) {
-      var fechaFormateadaOrigen = Utilities.formatDate(fechaOrigen, Session.getScriptTimeZone(), 'dd/MM/yy');
-      if (fechaFormateadaOrigen === fechaFormateada) {
-        filasPegar.push(datos[i]);
-      }
+  // Filtro inteligente en una sola pasada
+  var filas = datos.filter(function (fila) {
+
+    // Fecha
+    var fecha = fila[0];
+    if (!(fecha instanceof Date)) return false;
+    //if (Utilities.formatDate(fecha, Session.getScriptTimeZone(), 'dd/MM/yy') !== fechaHoy)
+    if (Utilities.formatDate(fecha, Session.getScriptTimeZone(), 'dd/MM/yy') !== fechaHoy)
+      return false;
+
+    fecha === Utilities.formatDate(fecha, Session.getScriptTimeZone(), 'dd-MM-yyyy HH:mm:ss')
+
+    var persona = fila[1];
+    var area = fila[3]; //uso
+    var categoria = fila[6];
+
+    switch (hojaInfo.destino) {
+      case "S.Gastos CICLICOS INTERNO PS A0":
+        return persona === "NATALIE_REYNA" && area === "DESPACHO";
+
+      /*las demas categorias deben de caer aqui*/
+      case "S.Gastos CICLICOS INTERNO PS A1":
+        return persona === "VALERIA_VARGAS" && area === "DESPACHO" && categoria !== "NOMINAS";//que no sean nomina, que sean las demas categorias.
+
+      /*solo nominas cairan en el A2 */
+      case "S.Gastos CICLICOS INTERNO PS A2":
+        return persona === "VALERIA_VARGAS" && area === "DESPACHO" && categoria === "NOMINAS"; //solo nominas
+
+      case "S.Gastos CICLICOS INTERNO PS A3":
+        return persona === "FATIMA_MARTINEZ" && area === "DESPACHO";
+
+      case "S.Gastos CICLICOS INTERNO PS A4":
+        return persona === "NADIA_ELIZONDO" && area === "DESPACHO";
+
+      case "S.Gastos CICLICOS INTERNO PS A5":
+        return persona === "NAYELI_LUNA" && area === "DESPACHO";
+
+      case "S.Gastos CICLICOS INTERNO PS A6":
+        return persona === "FRIDA_PIÑA" && area === "DESPACHO";
+      
+      case "S.Gastos Personales":
+        return persona === "VALERIA_VARGAS" && area === "PERSONAL";
+
+      default:
+        return true; // fallback
     }
+  });
+
+  if (filas.length === 0) {
+    Logger.log("ℹ️ No hay filas para " + hojaInfo.destino);
+    return;
   }
 
-  var valoresColB = hojaDestino.getRange("B:B").getValues();
-  var ultimaFilaColumnaB = 0;
-  for (var i = valoresColB.length - 1; i >= 0; i--) {
-    if (valoresColB[i][0] !== "" && valoresColB[i][0] !== null) {
-      ultimaFilaColumnaB = i + 1;
+  //var inicioPegado = hojaDestino.getLastRow() + 1;
+  var inicioPegado = ultimaFilaNoVaciaV1(hojaDestino);
+
+  hojaDestino.getRange(inicioPegado + 1, 2, filas.length, 28)
+    .setValues(filas);
+
+  Logger.log(`✅ ${hojaInfo.destino}: Pegadas ${filas.length} filas.`);
+}
+
+function ultimaFilaNoVaciaV1(hoja) {
+ // const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("SOLICITUDES 2024");
+  if (!hoja) {
+    Logger.log("La hoja "+ hoja + " no existe.");
+    return;
+  }
+  
+  //const columna = hoja.getRange("A:A").getValues(); // Obtiene todos los valores de la columna B
+  const columna = hoja.getRange("D:D").getValues(); // Obtiene todos los valores de la columna B
+  let ultimaFila = 0;
+
+  // Iterar desde el final hacia arriba para encontrar la última fila con datos
+  for (let i = columna.length - 1; i >= 0; i--) {
+    if (columna[i][0] !== "") {
+      ultimaFila = i + 1; // +1 porque los índices comienzan en 0
       break;
     }
   }
 
-  if (filasPegar.length > 0) {
-    var filasFiltradas;
-
-    // Dependiendo del nombre de la hoja aplicamos el filtro correcto
-    if (nombreDestino === "S.Gastos CICLICOS INTERNO PS A0") {
-      filasFiltradas = filasPegar.filter(function (filaArea) {
-        return ["NATALIE_REYNA"].includes(filaArea[1]);
-      });
-    } 
-    else if (nombreDestino === "S.Gastos CICLICOS INTERNO PS A1") {
-      filasFiltradas = filasPegar.filter(function (filaArea) {
-        return ["VALERIA_VARGAS"].includes(filaArea[1]);
-      });
-    } 
-     else if ("S.Gastos CICLICOS INTERNO PS A2" === "S.Gastos CICLICOS INTERNO PS A2") {
-      filasFiltradas = filasPegar.filter(function (filaArea) {
-        //return ["VALERIA_VARGAS"].includes(filaArea[1]);
-        return ["VALERIA_VARGAS"].includes(filaArea[1]) && ["DESPACHO"].includes(filaArea[3]);
-      });
-    }
-    else if (nombreDestino === "S.Gastos CICLICOS INTERNO PS A3") {
-      filasFiltradas = filasPegar.filter(function (filaArea) {
-        return ["FATIMA_MARTINEZ"].includes(filaArea[1]);
-      });
-    } 
-    else if (nombreDestino === "S.Gastos CICLICOS INTERNO PS A4") {
-      filasFiltradas = filasPegar.filter(function (filaArea) {
-        return ["NADIA_ELIZONDO"].includes(filaArea[1]);
-      });
-    } 
-    else if (nombreDestino === "S.Gastos CICLICOS INTERNO PS A5") { //Seria gastos personales??
-      filasFiltradas = filasPegar.filter(function (filaArea) {
-        return ["NAYELI_LUNA"].includes(filaArea[1]);
-      });
-    } 
-    else if (nombreDestino === "S.Gastos CICLICOS INTERNO PS A6") {
-      filasFiltradas = filasPegar.filter(function (filaArea) {
-        return ["FRIDA_PIÑA"].includes(filaArea[1]);
-      });
-    } else {
-      filasFiltradas = filasPegar; // si no hay regla definida, manda todo
-    }
-
-    var valorG = filasFiltradas.map(function (filaArea) {
-      return filaArea.slice(0, 28);
-    });
-
-    if (valorG.length > 0) {
-      hojaDestino.getRange(ultimaFilaColumnaB + 1, 2, valorG.length, valorG[0].length).setValues(valorG);
-      Logger.log("resultado: " + valorG.length+ " nombre de la hoja Des: " + nombreDestino);
-    } else {
-      Logger.log("no hay filas que cumplan la condición.");
-    }
-  }
+  return ultimaFila;
+ // Logger.log(`La última fila con datos en la columna A de 'solicitudes' es: ${ultimaFila}`);
 }
 
-/*codigo para sacar anual */
-function generarAnual() {//con la actualizacion
+/*ANUAL 22/12/2025*/
+function generarAnual() {//con la actualizacion 03/12/2025
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
   var hojaOrigen = libroOrigen.getSheetByName("S.Gastos CICLICOS INTERNO PS");
   //var hojaDestino = libroOrigen.getSheetByName("Planeador Despacho");
 
   //var hojaOrigen = libroOrigen.getSheetByName("Copia de S.Gastos CICLICOS INTERNO PS(Personal)");
   //var hojaDestino = libroOrigen.getSheetByName("Planeador Personal");
-  var hojaDestino = libroOrigen.getSheetByName("planeador Despacho");
+  var hojaDestino = libroOrigen.getSheetByName("planeador Anual");
+  //var hojaDestino = libroOrigen.getSheetByName("planeador Despacho");
   
   var datos = hojaOrigen.getRange("A:AE").getValues();
 
@@ -133,11 +148,17 @@ function generarAnual() {//con la actualizacion
 
 
   var periodicidades = {
-    "3ER LUNES DE JUNIO": function (anio) { return obtenerAnual(anio, 5, 14, 8); }, // Junio = 5
+    "17 ABRIL": function (anio) { return obtenerAnualPorMedioDia(anio, 3, 17); }, //3 es abril
+    "17 JUNIO": function (anio) { return obtenerAnualPorMedioDia(anio, 5, 17); }, // 5 junio
+    "21 MAYO": function (anio) { return obtenerAnualPorMedioDia(anio, 4, 21); }, // Mayo = 4
+    "23 JUNIO": function (anio) { return obtenerAnualPorMedioDia(anio, 5, 23); }, // 5 junio
+    "29 NOVIEMBRE": function (anio) { return obtenerAnualPorMedioDia(anio, 10, 29); }, // Noviembre = 10
+    "3 MARZO": function (anio) { return obtenerAnualPorMedioDia(anio, 2, 3); }, // Marzo = 2
+    "3 NOVIEMBRE": function (anio) { return obtenerAnualPorMedioDia(anio, 10, 3); }, // Noviembre = 10
+    
     "3ER MIERCOLES DE JULIO": function (anio) { return obtenerAnual(anio, 6, 14, 10); }, // Julio = 6
-    //"3ER MIERCOLES DE JULIO": function (anio) { return obtenerAnual(anio, 6, 14, 8); }, // Julio = 6
     "4TO LUNES DE ABRIL": function (anio) { return obtenerAnual(anio, 3, 21, 8); }, // Abril = 3
-    "4TO LUNES DE AGOSTO": function (anio) { return obtenerAnual(anio, 7, 21, 8); }, // Agosto = 7
+    "4TO LUNES DE AGOSTO": function (anio) { return obtenerAnual(anio, 7, 21, 8); }, // Agosto = 7 //no viene
     "4TO LUNES DE DICIEMBRE": function (anio) { return obtenerAnual(anio, 11, 21, 8); }, // Diciembre = 11
     "4TO LUNES DE ENERO": function (anio) { return obtenerAnual(anio, 0, 21, 8); }, // Enero = 0
     "4TO LUNES DE FEBRERO": function (anio) { return obtenerAnual(anio, 1, 21, 8); }, // Febrero = 1
@@ -146,8 +167,12 @@ function generarAnual() {//con la actualizacion
     "4TO LUNES DE MARZO": function (anio) { return obtenerAnual(anio, 2, 21, 8); }, // Marzo = 2
     "4TO LUNES DE MAYO": function (anio) { return obtenerAnual(anio, 4, 21, 8); }, // Mayo = 4
     "4TO LUNES DE NOVIEMBRE": function (anio) { return obtenerAnual(anio, 10, 21, 8); }, // Noviembre = 10
-    "4TO LUNES DE SEPTIEMBRE": function (anio) { return obtenerAnual(anio, 8, 21, 8); } // Septiembre = 8
+    "4TO LUNES DE SEPTIEMBRE": function (anio) { return obtenerAnual(anio, 8, 21, 8); }, // Septiembre = 8
+    
+    "6 JULIO": function (anio) { return obtenerAnualPorMedioDia(anio, 6, 6); }, // Julio = 6
+    "6 NOVIEMBRE": function (anio) { return obtenerAnualPorMedioDia(anio, 10, 6); }, // Noviembre = 10
   };
+
 
   var salida = [];
 
@@ -214,6 +239,7 @@ function formatearFecha(fecha) {
 
 
 // Función para obtener el tercer lunes de un mes dado
+//"3ER MIERCOLES DE JULIO": function (anio) { return obtenerAnual(anio, 6, 14, 10); }, //julio
                     //anio, 6, 14, 8
 function obtenerAnual(anio, mes, sumterCuar, dias) {
   var fecha = new Date(anio, mes, 1);//busca el primer dia del mes
@@ -223,14 +249,38 @@ function obtenerAnual(anio, mes, sumterCuar, dias) {
   return new Date(anio, mes, tercerLunes);
 } 
 
+/*
+  buscar las fechas:
+    17 ABRIL
+    17 JUNIO
+    21 MAYO
+    23 JUNIO
+    29 NOVIEMBRE
+    3 MARZO
+    3 NOVIEMBRE
+    6 JULIO
+    6 NOVIEMBRE
+    si cae en fin de semana, mover al dia habil anterior
+*/
+function obtenerAnualPorMedioDia(anio, mes, dia) {
+  var fecha = new Date(anio, mes, dia);
+  // Si cae en fin de semana, mover al día hábil anterior (viernes o antes)
+  while (fecha.getDay() === 0 || fecha.getDay() === 6) { // 0=Dom, 6=Sab
+    fecha.setDate(fecha.getDate() - 1);
+  }
+  return fecha;
+}
+
 //si cae en un dias festivo ara lo siguiente: 
-//si cae lunes dias festivo que lo mueva para el martes de ese semana
-//nuevo visto
+//si cae lunes dias festivo que lo mueva para el Viernes de la semana anterior
+//si cae un dia festivo que sea un dia antes pero vigente.
 function ajustarPorFestivoAnual(fecha) {
   var festivosFijos = [
     { mes: 0, dia: 1 },   // 1 Enero
-    { mes: 1, dia: 5 },   // 5 Febrero
-    { mes: 2, dia: 21 },  // 21 Marzo
+    { mes: 1, dia: 2 },   // 5 Febrero //Primer lunes de febrero
+    //{ mes: 1, dia: 5 },   // 5 Febrero ==arreglar el codigo para esto.
+    { mes: 2, dia: 16 },  // 21 Marzo //tercer lunes de marzo
+    //{ mes: 2, dia: 21 },  // 21 Marzo ==arreglar el codigo para este.
     { mes: 4, dia: 1 },   // 1 Mayo
     { mes: 8, dia: 16 },  // 16 Septiembre
     { mes: 11, dia: 12 }, // 12 Diciembre
@@ -258,23 +308,60 @@ function ajustarPorFestivoAnual(fecha) {
 
   var dia = fecha.getDay(); // 0=Dom, 1=Lun...
 
-  // Si es lunes festivo → mover al martes
-  if (dia === 1) {
-    var martes = new Date(fecha);
-    martes.setDate(martes.getDate() + 1);
-    if (martes.getDay() !== 0 && martes.getDay() !== 6 && !esFestivo(martes)) {
-      return martes;
+  // lunes festivo → viernes de la semana pasada
+    if (dia === 1) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 3);//viernes de la semana pasada
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
     }
-  }
+
+    // Martes -> Lunes de esa semana
+    if (dia === 2) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//lunes de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
+
+    // miércoles festivo → martes
+    if (dia === 3) {
+      var martes = new Date(fecha);
+      martes.setDate(fecha.getDate() - 1); //martes de la semana 
+      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
+        return martes;
+      }
+    }
+
+    // Jueves -> Miercoles de esa semana
+    if (dia === 4) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//miercoles de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
+
+    // viernes -> jueves de esa semana
+    if (dia === 5) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//jueves de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
 
   return fecha; // si nada aplica, regresa la original
 }
 
-/*bimestral */
+/*BIMESTRAL 22/12/2025*/
 function generarBimestrales() {
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
   var hojaOrigen = libroOrigen.getSheetByName("S.Gastos CICLICOS INTERNO PS");
-  var hojaDestino = libroOrigen.getSheetByName("Planeador Despacho");
+  //var hojaDestino = libroOrigen.getSheetByName("Planeador Despacho");
+  var hojaDestino = libroOrigen.getSheetByName("Planeador Bimestral");
   //var hojaDestino = libroOrigen.getSheetByName("hojaPrueba");
   
 
@@ -290,21 +377,24 @@ function generarBimestrales() {
   var anioFin = 2026, mesFin = 11;       // diciembre 2026
 
   // Meses bimestrales
-  var tercerCuartoBiM = [0, 2, 4, 6, 8, 10]; //4TO LUNES / 3ER MIERCOLES DE ENE, MAR, MAY, JUL, SEP, NOV
-  var tercerCuartoBiMF = [1, 3, 5, 7, 9, 11]; //4TO LUNES DE FEB / 3ER MIERCOLES, ABR, JUN, AGO, OCT, DIC
+  var mesEneNovBiM = [0, 2, 4, 6, 8, 10]; //4TO LUNES / 3ER MIERCOLES DE ENE, MAR, MAY, JUL, SEP, NOV
+  var mesFebDicBiMF = [1, 3, 5, 7, 9, 11]; //4TO LUNES DE FEB / 3ER MIERCOLES, FEB, ABR, JUN, AGO, OCT, DIC
 
   var periodicidades = {
 
-    "3ER MIERCOLES DE ENE, MAR, MAY, JUL, SEP, NOV": function (anio) { return obtenerBimestral(anio, tercerCuartoBiM, 14, 10); }, // Junio = 5
-    "3ER MIERCOLES DE FEB, ABR, JUN, AGO, OCT, DIC": function (anio) { return obtenerBimestral(anio, tercerCuartoBiMF, 14, 10); }, // Junio = 5
-    "4TO LUNES DE ENE, MAR, MAY, JUL, SEP, NOV": function (anio) { return obtenerBimestral(anio, tercerCuartoBiM, 21, 8); }, // Junio = 5
-    "4TO LUNES DE FEB, ABR, JUN, AGO, OCT, DIC": function (anio) { return obtenerBimestral(anio, tercerCuartoBiMF, 21, 8); } // Junio = 5
+    "1ER DIA HABIL DE ENE, MAR, MAY, JUL, SEP, NOV": function (anio) { return obtenerBimestral(anio, mesEneNovBiM, 0, 1); },
+    "1ER DIA HABIL DE FEB, ABR, JUN, AGO, OCT, DIC": function (anio) { return obtenerBimestral(anio, mesFebDicBiMF, 0, 1); },
+    "2DO MIERCOLES DE ENE, MAR, MAY, JUL, SEP, NOV": function (anio) { return obtenerBimestral(anio, mesEneNovBiM, 7, 3); },
+    "2DO MIERCOLES DE FEB, ABR, JUN, AGO, OCT, DIC": function (anio) { return obtenerBimestral(anio, mesFebDicBiMF, 7, 3); },
+    "3ER MIERCOLES DE ENE, MAR, MAY, JUL, SEP, NOV": function (anio) { return obtenerBimestral(anio, mesEneNovBiM, 14, 10); },
+    "3ER MIERCOLES DE FEB, ABR, JUN, AGO, OCT, DIC": function (anio) { return obtenerBimestral(anio, mesFebDicBiMF, 14, 10); },
+    "4TO LUNES DE ENE, MAR, MAY, JUL, SEP, NOV": function (anio) { return obtenerBimestral(anio, mesEneNovBiM, 21, 8); }
+
   };
 
   var salida = [];
 
   for (var i = 5; i < datos.length; i++) {
-    //var periodicidad = (datos[i][29] || "").toString().trim().toUpperCase();
     //var periodicidad = (datos[i][29] || "").toString().trim().toUpperCase();// gastos personales
     var periodicidad = (datos[i][30] || "").toString().trim().toUpperCase();//gastos Despacho
     var funcion = periodicidades[periodicidad];
@@ -315,7 +405,7 @@ function generarBimestrales() {
 
     // recorrer años dentro del rango
     for (var anio = anioInicio; anio <= anioFin; anio++) {
-      var fechas = funcion(anio); // arreglo de fechas bimestrales
+      var fechas = funcion(anio); // arreglo de fechas bimestrales //Invalid Date??? esta vacio, no hay fecha.
       fechas = ajustarPorFestivoBime(fechas); // ajusta lunes/miércoles festivos
 
 
@@ -350,6 +440,15 @@ function generarBimestrales() {
   }
 }
 
+/*function primerDiaHabilDelMes(anio, mes) {
+  var fecha = new Date(anio, mes, 1);
+  while (fecha.getDay() === 0 || fecha.getDay() === 6) {
+    fecha.setDate(fecha.getDate() + 1);
+  }
+  return fecha;
+}*/
+
+
 function formatearFechaB(fecha) {
   if (!fecha) return "";
   var dia = fecha.getDate();
@@ -369,39 +468,55 @@ function obtenerBimestral(anio, mesesArr, sumterCuar, dias) {
 }
 
 // Función para obtener el lunes/miércoles según parámetros
-function obtenerBimes(anio, mes, sumterCuar, dias) {
+/*function obtenerBimes(anio, mes, sumterCuar, dias) {
   var fecha = new Date(anio, mes, 1);
-  var diaSemana = fecha.getDay();
+  var diaSemana = fecha.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
   var diasHastaDia = (dias - diaSemana) % 7;
   var diaFinal = 1 + diasHastaDia + sumterCuar;
   return new Date(anio, mes, diaFinal);
+}*/
+
+function obtenerBimes(anio, mes, sumterCuar, diaObjetivo) {
+  var fecha = new Date(anio, mes, 1);
+  var primerDia = fecha.getDay(); // día de la semana del 1 del mes
+
+  // calcular cuántos días faltan para llegar al día de la semana objetivo
+  var offset = (diaObjetivo - primerDia + 7) % 7;
+
+  // primer occurrence
+  var primerDiaObjetivo = 1 + offset;
+
+  // luego sumas semanas
+  var diaFinal = primerDiaObjetivo + sumterCuar;
+
+  return new Date(anio, mes, diaFinal);
 }
 
-/*
+
+/* dias festivos**
 Si cae en día festivo, ajustar la fecha:
+Lunes -> viernes de la semana pasada
+Martes -> Lunes de esa semana
 Miercoles -> Martes de esa semana
-Lunes -> Martes de esa semana
- los domingos y sabados
+Jueves -> Miercoles de esa semana
+viernes -> Jueves de esa semana
+No domingos, ni sabados
 */
 
-//dias festivos
-/*
-si cae un dia festivo en miercoles que pase al mastes de esa semana
-si cae lunes festivo que pase al mastes de esa semana
-y si no pasa nada pasa
- */
-
-function ajustarPorFestivoBime(fechas) {
+function ajustarPorFestivoBime(fechas) {//actualizado 03/12/2025 '' si queda igual se iguala a los demas metodos.
   var festivosFijos = [
     { mes: 0, dia: 1 },   // 1 Enero
-    { mes: 1, dia: 5 },   // 5 Febrero
-    { mes: 2, dia: 21 },  // 21 Marzo
+    { mes: 1, dia: 2 },   // 5 Febrero //Primer lunes de febrero
+    //{ mes: 1, dia: 5 },   // 5 Febrero ==arreglar el codigo para esto.
+    { mes: 2, dia: 16 },  // 21 Marzo //tercer lunes de marzo
+    //{ mes: 2, dia: 21 },  // 21 Marzo ==arreglar el codigo para este.
     { mes: 4, dia: 1 },   // 1 Mayo
     { mes: 8, dia: 16 },  // 16 Septiembre
     { mes: 11, dia: 12 }, // 12 Diciembre
     { mes: 11, dia: 25 }  // 25 Diciembre
   ];
 
+  /*El tercer lunes de noviembre lo tengo representado asi, porque no tiene un dia en espesifico sino que es variable. */
   // --- calcular el 3er lunes de noviembre dinámico ---
   function obtenerTercerLunesNoviembre(year) {
     var fecha = new Date(year, 10, 1); // 1 Noviembre
@@ -427,34 +542,63 @@ function ajustarPorFestivoBime(fechas) {
 
     if (!esFestivo(fecha)) return fecha; // si no es festivo, se queda igual
 
-    var dia = fecha.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mié...
+    var dia = fecha.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
+
+    // lunes festivo → viernes de la semana pasada
+    if (dia === 1) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 3);//viernes de la semana pasada
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
+
+    // Martes -> Lunes de esa semana
+    if (dia === 2) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//lunes de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
 
     // miércoles festivo → martes
     if (dia === 3) {
       var martes = new Date(fecha);
-      martes.setDate(fecha.getDate() - 1);
+      martes.setDate(fecha.getDate() - 1); //martes de la semana 
       if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
         return martes;
       }
     }
 
-    // lunes festivo → martes
-    if (dia === 1) {
-      var martes = new Date(fecha);
-      martes.setDate(fecha.getDate() + 1);
-      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
-        return martes;
+    // Jueves -> Miercoles de esa semana
+    if (dia === 4) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//miercoles de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
       }
     }
+
+    // viernes -> jueves de esa semana
+    if (dia === 5) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//jueves de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
+    
 
     return fecha; // si no aplica, devolver la original
   });
 }
 
-/*eliminar para quitar informacion inesesaria */
+/*ELIMINAR*/
 function eliminarFilasDespacho() {
   var libro = SpreadsheetApp.getActiveSpreadsheet();
-  var hoja = libro.getSheetByName("planeador Despacho");
+  var hoja = libro.getSheetByName("planeador trimestral");
+  //var hoja = libro.getSheetByName("Planeador Bimestral");
   if (!hoja) {
     Logger.log("La hoja 'despacho' no existe.");
     return;
@@ -465,12 +609,12 @@ function eliminarFilasDespacho() {
   }
 }
 
-/*mensual */
+/*MENSUAL*/
 function mensual() { //funciona bien = no tocar
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
   var hojaOrigen = libroOrigen.getSheetByName("S.Gastos CICLICOS INTERNO PS");
   //var hojaDestino = libroOrigen.getSheetByName("Planeador Despacho");
-  var hojaDestino = libroOrigen.getSheetByName("Planeador Despacho");
+  var hojaDestino = libroOrigen.getSheetByName("planeador mensual");
 
   //var hojaOrigen = libroOrigen.getSheetByName("Copia de S.Gastos CICLICOS INTERNO PS(Personal)");
   //var hojaDestino = libroOrigen.getSheetByName("Planeador Personal");
@@ -486,16 +630,20 @@ function mensual() { //funciona bien = no tocar
   var anioFin = 2026, mesFin = 11;       // diciembre
 
   var periodicidades = {
-    "1ER DIA HABIL DEL MES": primerDiaHabilDelMes,
-    "1ER LUNES DE CADA MES": primerLunesDelMes,
-    "1ER MIERCOLES DE CADA MES": primerMiercolesDelMes,
-    "2DO LUNES DE CADA MES": segundoLunesDelMes,
-    "2DO MIERCOLES DE CADA MES": segundoMiercolesDelMes,
-    "3ER LUNES DE CADA MES": tercerLunesDelMes,
-    "3ER MIERCOLES DE CADA MES": tercerMiercolesDelMes,
-    "4TO LUNES DE CADA MES": cuartoLunesDelMes,
-    "4TO VIERNES DE CADA MES": cuartoViernesDelMes,
-    "ULTIMO VIERNES DEL MES": ultimoViernesDelMes
+    "15 O 16 DE CADA MES" : quinceO16DiaHabilDelMes,
+    "1ER DIA HABIL DEL MES" : primerDiaHabilDelMes,
+    "1ER LUNES DE CADA MES" : primerLunesDelMes,
+    "1ER MIERCOLES DE CADA MES" : primerMiercolesDelMes,
+    "2DO LUNES DE CADA MES" : segundoLunesDelMes,
+    "2DO MIERCOLES DE CADA MES" : segundoMiercolesDelMes,
+    "2DO VIERNES DE CADA MES" : segundoViernesDelMes, //nuevo funciona
+    "3ER DIA HABIL DEL MES" : tercerDiaHabilDelMes,//nuevo funciona
+    "3ER LUNES DE CADA MES" : tercerLunesDelMes,
+    "3ER MIERCOLES DE CADA MES" : tercerMiercolesDelMes,
+    "3ER VIERNES DE CADA MES" : tercerViernesDelMes,//nuevo funciona
+    "4TO LUNES DE CADA MES" : cuartoLunesDelMes,
+    "4TO VIERNES DE CADA MES" : cuartoViernesDelMes,
+    "9 DE CADA MES" : nueveDiaHabilDelMes,
   };
 
   var salida = [];
@@ -507,8 +655,7 @@ function mensual() { //funciona bien = no tocar
     if (!funcion) continue;
 
     //var filaDatos = datos[i].slice(2, 30); // columnas C:AD
-    var filaDatos = 
-    datos[i].slice(2, 27); // columnas C:AD
+    var filaDatos = datos[i].slice(2, 27); // columnas C:AD
 
     // Reemplazar AB por "NUEVO" si está vacía o tiene cualquier valor
     filaDatos[26] = "NUEVO"; // posición 25 = columna AB
@@ -541,9 +688,20 @@ function mensual() { //funciona bien = no tocar
 //
 // -------- FUNCIONES DE PERIODICIDAD --------
 //
+
+function quinceO16DiaHabilDelMes(anio, mes) {//fallo ==aqui me quedo
+  var fecha = new Date(anio, mes, 15);// 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
+  if (fecha.getDay() === 6) {//sabados 
+    fecha.setDate(fecha.getDate() - 1);
+  }else if(fecha.getDay() === 0){ //y ni domingos
+      fecha.setDate(fecha.getDate() - 2);
+  }
+  return fecha;
+}
+
 function primerDiaHabilDelMes(anio, mes) {
   var fecha = new Date(anio, mes, 1);
-  while (fecha.getDay() === 0 || fecha.getDay() === 6) {
+  while (fecha.getDay() === 0 || fecha.getDay() === 6) {//sabados y ni domingos
     fecha.setDate(fecha.getDate() + 1);
   }
   return fecha;
@@ -577,6 +735,29 @@ function segundoMiercolesDelMes(anio, mes) {
   return fecha;
 }
 
+function segundoViernesDelMes(anio, mes) {//nuevo
+  var fecha = new Date(anio, mes, 1);
+  var count = 0;
+  while (count < 2) {
+    if (fecha.getDay() === 5) count++;
+    if (count < 2) fecha.setDate(fecha.getDate() + 1);
+  }
+  return fecha;
+}
+
+function tercerDiaHabilDelMes(anio, mes) {//fallo ==aqui me quedo
+  //var fecha = new Date(anio, mes, 1);
+  var fecha = new Date(anio, mes, 3);// 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
+  if (fecha.getDay() === 6) {//sabados 
+  //while (fecha.getDay() === 0 || fecha.getDay() === 6) {//sabados y ni domingos
+    //fecha.setDate(fecha.getDate() + 3);
+    fecha.setDate(fecha.getDate() - 1);
+  }else if(fecha.getDay() === 0){ //y ni domingos
+      fecha.setDate(fecha.getDate() - 2);
+  }
+  return fecha;
+}
+
 function tercerLunesDelMes(anio, mes) {
   var fecha = primerLunesDelMes(anio, mes);
   fecha.setDate(fecha.getDate() + 14);
@@ -586,6 +767,16 @@ function tercerLunesDelMes(anio, mes) {
 function tercerMiercolesDelMes(anio, mes) {
   var fecha = primerMiercolesDelMes(anio, mes);
   fecha.setDate(fecha.getDate() + 14);
+  return fecha;
+}
+
+function tercerViernesDelMes(anio, mes) {//nuevo
+  var fecha = new Date(anio, mes, 1);
+  var count = 0;
+  while (count < 3) {
+    if (fecha.getDay() === 5) count++;
+    if (count < 3) fecha.setDate(fecha.getDate() + 1);
+  }
   return fecha;
 }
 
@@ -599,7 +790,7 @@ function cuartoViernesDelMes(anio, mes) {
   var fecha = new Date(anio, mes, 1);
   var count = 0;
   while (count < 4) {
-    if (fecha.getDay() === 5) count++;
+    if (fecha.getDay() === 5) count++; //// 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
     if (count < 4) fecha.setDate(fecha.getDate() + 1);
   }
   return fecha;
@@ -613,6 +804,17 @@ function ultimoViernesDelMes(anio, mes) {
   return fecha;
 }
 
+function nueveDiaHabilDelMes(anio, mes) {//fallo ==aqui me quedo
+  var fecha = new Date(anio, mes, 9);// 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
+  if (fecha.getDay() === 6) {//sabados 
+    fecha.setDate(fecha.getDate() - 1);
+  }else if(fecha.getDay() === 0){ //y ni domingos
+      fecha.setDate(fecha.getDate() - 2);
+  }
+  return fecha;
+}
+
+
 //
 // --------- Ajuste por días festivos ---------
 //si cae en un dias festivo ara lo siguiente: 
@@ -624,8 +826,10 @@ function ultimoViernesDelMes(anio, mes) {
 function ajustarPorFestivo(fecha, periodicidad) {
   var festivos = [
     { mes: 0, dia: 1 },   // 1 Enero
-    { mes: 1, dia: 5 },   // 5 Febrero
-    { mes: 2, dia: 21 },  // 21 Marzo
+    { mes: 1, dia: 2 },   // 5 Febrero //Primer lunes de febrero
+    //{ mes: 1, dia: 5 },   // 5 Febrero ==arreglar el codigo para esto.
+    { mes: 2, dia: 16 },  // 21 Marzo //tercer lunes de marzo
+    //{ mes: 2, dia: 21 },  // 21 Marzo ==arreglar el codigo para este.
     { mes: 4, dia: 1 },   // 1 Mayo
     { mes: 8, dia: 16 },  // 16 Septiembre
     { mes: 11, dia: 12 }, // 12 Diciembre
@@ -650,65 +854,50 @@ function ajustarPorFestivo(fecha, periodicidad) {
 
   var dia = fecha.getDay();
 
-  // Miércoles → martes
-  if (dia === 3) {
-    var martes = new Date(fecha);
-    martes.setDate(fecha.getDate() - 1);
-    if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) return martes;
-  }
-
-  // Lunes → martes
-  if (dia === 1) {
-    var martes = new Date(fecha);
-    martes.setDate(fecha.getDate() + 1);
-    if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) return martes;
-  }
-
-  // Viernes → miércoles (o reglas de "1ER DIA HABIL DEL MES")
-  if (dia === 5) {
-    if (periodicidad === "1ER DIA HABIL DEL MES") {
-      var siguiente = new Date(fecha);
-      do {
-        siguiente.setDate(siguiente.getDate() + 1);
-      } while ((siguiente.getDay() === 0 || siguiente.getDay() === 6 || esFestivo(siguiente)) &&
-               siguiente.getMonth() === fecha.getMonth());
-
-      if (siguiente.getMonth() !== fecha.getMonth()) {
-        siguiente = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 1);
-        while (siguiente.getDay() === 0 || siguiente.getDay() === 6 || esFestivo(siguiente)) {
-          siguiente.setDate(siguiente.getDate() + 1);
-        }
+  // lunes festivo → viernes de la semana pasada
+    if (dia === 1) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 3);//viernes de la semana pasada
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
       }
-      return siguiente;
-    } else {
-      var miercoles = new Date(fecha);
-      miercoles.setDate(fecha.getDate() - 2);
-      if (!esFestivo(miercoles) && miercoles.getDay() !== 0 && miercoles.getDay() !== 6) return miercoles;
     }
-  }
 
-  // Reglas de "1ER DIA HABIL DEL MES"
-  if (periodicidad === "1ER DIA HABIL DEL MES") {
-    var siguiente = new Date(fecha);
-    var intentos = 0;
-    do {
-      siguiente.setDate(siguiente.getDate() + 1);
-      intentos++;
-      if (siguiente.getDay() === 1 && intentos > 1) break;
-    } while ((siguiente.getDay() === 0 || siguiente.getDay() === 6 || esFestivo(siguiente)) && intentos < 7);
-
-    if (siguiente.getDay() === 0 || siguiente.getDay() === 6 || esFestivo(siguiente)) {
-      var proxLunes = new Date(fecha);
-      proxLunes.setDate(proxLunes.getDate() + (8 - proxLunes.getDay()) % 7);
-      for (var i = 0; i < 5; i++) {
-        var diaHabil = new Date(proxLunes);
-        diaHabil.setDate(diaHabil.getDate() + i);
-        if (diaHabil.getDay() !== 0 && diaHabil.getDay() !== 6 && !esFestivo(diaHabil)) return diaHabil;
+    // Martes -> Lunes de esa semana
+    if (dia === 2) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//lunes de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
       }
-    } else {
-      return siguiente;
     }
-  }
+
+    // miércoles festivo → martes
+    if (dia === 3) {
+      var martes = new Date(fecha);
+      martes.setDate(fecha.getDate() - 1); //martes de la semana 
+      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
+        return martes;
+      }
+    }
+
+    // Jueves -> Miercoles de esa semana
+    if (dia === 4) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//miercoles de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
+
+    // viernes -> jueves de esa semana
+    if (dia === 5) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//jueves de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
 
   return fecha;
 }
@@ -722,14 +911,14 @@ function formatearFechaM(fecha) {
   return Utilities.formatDate(fecha, Session.getScriptTimeZone(), 'dd/MM/yyyy');
 }
 
-/*quincenal */
+/*QUINCENAL*/
 /*
   codigo que de la hoja horigen "S.Gastos CICLICOS INTERNO PS" sacaras la periosdad cuando sea en la columna 29 === DIAS 15 Y DIAS 30 y cuando encuentes este cadena vas a sacar la fecha de cada mes 15 dias: osea en enero 15 miercoles y 30 jueves pero adcesion de fedrero la primera quincena va ser el 15 y (si el 15 sale sabado o domingo moverlo al viernes de preferencia) como en febrero no hay 30 hay que moverlo al ultimo dia vigente del mes (viegente de dias lunes a viernes). y esas fechas se pegaran en la columna A de la hojas destino : "Fechas 2025" y despes de la columna A ira el rango de C:AA de la hoja origen corespondiente perioridad que salga "DIAS 15 Y DIAS 30", el rango a sacar de la hoja destino es "A:AD".
 */
 function quincenal() {//funciona no mover
   var libro = SpreadsheetApp.getActiveSpreadsheet();
   var hojaOrigen = libro.getSheetByName("S.Gastos CICLICOS INTERNO PS");
-  var hojaDestino = libro.getSheetByName("Planeador Despacho");
+  var hojaDestino = libro.getSheetByName("planeador quincenal");
   //var hojaDestino = libro.getSheetByName("Base");
 
   //var hojaOrigen = libro.getSheetByName("Copia de S.Gastos CICLICOS INTERNO PS(Personal)");
@@ -825,62 +1014,14 @@ function formatearFechaQ(fecha) {
   return dia + "/" + mes + "/" + anio;
 }
 
-/*function ajustarPorFestivoQuin(fila) {
-  // fila[0] es la fecha en formato "d/m/yyyy"
-  var festivos = [
-    { mes: 0, dia: 1 },   // 1 Enero
-    { mes: 1, dia: 5 },   // 5 Febrero
-    { mes: 2, dia: 21 },  // 21 Marzo
-    { mes: 4, dia: 1 },   // 1 Mayo
-    { mes: 8, dia: 16 },  // 16 Septiembre
-    { mes: 10, dia: 20 }, // 20 Noviembre
-    { mes: 11, dia: 12 }, // 12 Diciembre
-    { mes: 11, dia: 25 }  // 25 Diciembre
-  ];
-
-  function esFestivo(d) {
-    if (!(d instanceof Date)) {
-      var partes = d.split("/");
-      d = new Date(Number(partes[2]), Number(partes[1]) - 1, Number(partes[0]));
-    }
-    return festivos.some(f => d.getMonth() === f.mes && d.getDate() === f.dia);
-  }
-
-  // Solo ajusta la fecha de la columna 0
-  var partes = fila[0].split("/");
-  var fecha = new Date(Number(partes[2]), Number(partes[1]) - 1, Number(partes[0]));
-
-  if (esFestivo(fecha)) {
-    var dia = fecha.getDay();
-    // Miércoles festivo → martes
-    if (dia === 3) {
-      var martes = new Date(fecha);
-      martes.setDate(fecha.getDate() - 1);
-      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
-        fila[0] = formatearFechaQ(martes);
-        return fila;
-      }
-    }
-    // Lunes festivo → martes
-    if (dia === 1) {
-      var martes = new Date(fecha);
-      martes.setDate(fecha.getDate() + 1);
-      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
-        fila[0] = formatearFechaQ(martes);
-        return fila;
-      }
-    }
-  }
-  // Si no aplica ajuste, regresa igual
-  return fila;
-}*/
-
 function ajustarPorFestivoQuin(fila) {
   // fila[0] es la fecha en formato "d/m/yyyy"
   var festivos = [
     { mes: 0, dia: 1 },   // 1 Enero
-    { mes: 1, dia: 5 },   // 5 Febrero
-    { mes: 2, dia: 21 },  // 21 Marzo
+    { mes: 1, dia: 2 },   // 5 Febrero //Primer lunes de febrero
+    //{ mes: 1, dia: 5 },   // 5 Febrero ==arreglar el codigo para esto.
+    { mes: 2, dia: 16 },  // 21 Marzo //tercer lunes de marzo
+    //{ mes: 2, dia: 21 },  // 21 Marzo ==arreglar el codigo para este.
     { mes: 4, dia: 1 },   // 1 Mayo
     { mes: 8, dia: 16 },  // 16 Septiembre
     { mes: 11, dia: 12 }, // 12 Diciembre
@@ -912,30 +1053,62 @@ function ajustarPorFestivoQuin(fila) {
 
   if (esFestivo(fecha)) {
     var dia = fecha.getDay();
-    // Miércoles festivo → martes
-    if (dia === 3) {
-      var martes = new Date(fecha);
-      martes.setDate(fecha.getDate() - 1);
-      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
-        fila[0] = formatearFechaQ(martes);
-        return fila;
-      }
-    }
-    // Lunes festivo → martes
+
+     // lunes festivo → viernes de la semana pasada
     if (dia === 1) {
-      var martes = new Date(fecha);
-      martes.setDate(fecha.getDate() + 1);
-      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
+      var lunes = new Date(fecha); 
+      lunes.setDate(fecha.getDate() - 3);//viernes de la semana pasada
+      if (!esFestivo(lunes) && lunes.getDay() !== 0 && lunes.getDay() !== 6) {//no domingo, ni sabados
+        fila[0] = formatearFechaQ(lunes);
+        return fila;
+      }
+    }
+
+     // Martes -> Lunes de esa semana
+    if (dia === 2) {
+      var martes = new Date(fecha); 
+      martes.setDate(fecha.getDate() - 1);//lunes de la semana 
+      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {//no domingo, ni sabados
         fila[0] = formatearFechaQ(martes);
         return fila;
       }
     }
+
+    // miércoles festivo → martes
+    if (dia === 3) {
+      var miercoles = new Date(fecha);
+      miercoles.setDate(fecha.getDate() - 1); //martes de la semana 
+      if (!esFestivo(miercoles) && miercoles.getDay() !== 0 && miercoles.getDay() !== 6) {
+        fila[0] = formatearFechaQ(miercoles);
+        return fila;
+      }
+    }
+
+    // Jueves -> Miercoles de esa semana
+    if (dia === 4) {
+      var jueves = new Date(fecha); 
+      jueves.setDate(fecha.getDate() - 1);//miercoles de la semana 
+      if (!esFestivo(jueves) && jueves.getDay() !== 0 && jueves.getDay() !== 6) {//no domingo, ni sabados
+        fila[0] = formatearFechaQ(jueves);
+        return fila;
+      }
+    }
+
+    // viernes -> jueves de esa semana
+    if (dia === 5) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//jueves de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        fila[0] = formatearFechaQ(viernes);
+        return fila;
+      }
+    }
+
   }
 
   return fila;
 }
-
-/*semanal */
+/* SEMANAL*/
 /*
 codigo que de la hoja horigen "S.Gastos CICLICOS INTERNO PS" sacaras la periosdad cuando sea en la columna 29 === "CADA LUNES || CADA VIERNES ||
 DIARIO" y cuando encuentes este cadena vas a sacar laS fechaS: cada lunes de cada mes y viernes y diario sin contar sabado o domigos y esas fechas se pegaran en la columna A de la hojas destino : "Fechas 2025" y despes de la columna A ira el rango de C:AA de la hoja origen corespondiente perioridad que salga "CADA LUNES || CADA VIERNES ||
@@ -952,7 +1125,7 @@ DIARIO", el rango a sacar de la hoja destino es "A:AD".
 function generarSemanal() {
   var libro = SpreadsheetApp.getActiveSpreadsheet();
   var hojaOrigen = libro.getSheetByName("S.Gastos CICLICOS INTERNO PS");
-  var hojaDestino = libro.getSheetByName("Planeador Despacho");
+  var hojaDestino = libro.getSheetByName("planeador semanal");
   //var hojaDestino = libro.getSheetByName("hojaPrueba");
 
   //var hojaOrigen = libro.getSheetByName("Copia de S.Gastos CICLICOS INTERNO PS(Personal)");
@@ -972,7 +1145,8 @@ function generarSemanal() {
   for (var i = 1; i < datos.length; i++) {
     //var periodicidad = (datos[i][29] || "").toString().trim().toUpperCase();
     var periodicidad = (datos[i][30] || "").toString().trim().toUpperCase();
-    if (periodicidad !== "CADA LUNES" && periodicidad !== "CADA VIERNES" && periodicidad !== "DIARIO") continue;
+    //if (periodicidad !== "CADA LUNES" && periodicidad !== "CADA VIERNES" && periodicidad !== "DIARIO") continue;
+    if (periodicidad !== "CADA VIERNES" && periodicidad !== "TODOS LOS LUNES HABILES") continue;
   
     //var filaDatos = datos[i].slice(2, 27);
     var filaDatos = datos[i].slice(2, 28);
@@ -987,9 +1161,10 @@ function generarSemanal() {
         var fechaFinMes = new Date(anio, mes + 1, 0);
   
         var fechas = [];
-        if (periodicidad === "CADA LUNES") fechas = obtenerDiasPorSemanaRango(fechaIniMes, fechaFinMes, 1);
-        else if (periodicidad === "CADA VIERNES") fechas = obtenerDiasPorSemanaRango(fechaIniMes, fechaFinMes, 5);
-        else if (periodicidad === "DIARIO") fechas = obtenerDiasHabilesRango(fechaIniMes, fechaFinMes);
+        //if (periodicidad === "CADA LUNES") fechas = obtenerDiasPorSemanaRango(fechaIniMes, fechaFinMes, 1);
+        if (periodicidad === "CADA VIERNES") fechas = obtenerDiasPorSemanaRango(fechaIniMes, fechaFinMes, 5);
+        else if (periodicidad === "TODOS LOS LUNES HABILES") fechas = todosLunesHabiles(fechaIniMes, fechaFinMes, 1); // 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
+        //else if (periodicidad === "DIARIO") fechas = obtenerDiasHabilesRango(fechaIniMes, fechaFinMes);
   
         fechas.forEach(function(fecha) {
           fecha = ajustarPorFestivoSem(fecha);
@@ -1012,7 +1187,7 @@ function generarSemanal() {
 }
 
 // Días hábiles dentro de un rango
-function obtenerDiasHabilesRango(fechaInicio, fechaFin) {
+/*function obtenerDiasHabilesRango(fechaInicio, fechaFin) {
   var fechas = [];
   var f = new Date(fechaInicio);
   while (f <= fechaFin) {
@@ -1020,10 +1195,21 @@ function obtenerDiasHabilesRango(fechaInicio, fechaFin) {
     f.setDate(f.getDate() + 1);
   }
   return fechas;
+}*/
+
+// Días de semana (lunes=1, viernes=5) dentro de un rango
+function obtenerDiasPorSemanaRango(fechaInicio, fechaFin, diaSemana) { // 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
+  var fechas = [];
+  var f = new Date(fechaInicio);
+  while (f <= fechaFin) {
+    if (f.getDay() === diaSemana) fechas.push(new Date(f));
+      f.setDate(f.getDate() + 1);
+  }
+  return fechas;
 }
 
 // Días de semana (lunes=1, viernes=5) dentro de un rango
-function obtenerDiasPorSemanaRango(fechaInicio, fechaFin, diaSemana) {
+function todosLunesHabiles(fechaInicio, fechaFin, diaSemana) { // 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
   var fechas = [];
   var f = new Date(fechaInicio);
   while (f <= fechaFin) {
@@ -1055,8 +1241,10 @@ function ajustarPorFestivoSem(fecha) {
   // Festivos fijos
   var festivos = [
     { mes: 0, dia: 1 },   // 1 Enero
-    { mes: 1, dia: 5 },   // 5 Febrero
-    { mes: 2, dia: 21 },  // 21 Marzo
+    { mes: 1, dia: 2 },   // 5 Febrero //Primer lunes de febrero
+    //{ mes: 1, dia: 5 },   // 5 Febrero ==arreglar el codigo para esto.
+    { mes: 2, dia: 16 },  // 21 Marzo //tercer lunes de marzo
+    //{ mes: 2, dia: 21 },  // 21 Marzo ==arreglar el codigo para este.
     { mes: 4, dia: 1 },   // 1 Mayo
     { mes: 8, dia: 16 },  // 16 Septiembre
     { mes: 11, dia: 12 }, // 12 Diciembre
@@ -1087,50 +1275,60 @@ function ajustarPorFestivoSem(fecha) {
 
   if (!esFestivo(fecha)) return fecha;
 
-  // Lunes festivo → martes
-  if (dia === 1) {
-    var martes = new Date(fecha);
-    martes.setDate(fecha.getDate() + 1);
-    if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) return martes;
-  }
+  // lunes festivo → viernes de la semana pasada
+    if (dia === 1) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 3);//viernes de la semana pasada
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
 
-  // Martes festivo → miércoles
-  if (dia === 2) {
-    var miercoles = new Date(fecha);
-    miercoles.setDate(fecha.getDate() + 1);
-    if (!esFestivo(miercoles) && miercoles.getDay() !== 0 && miercoles.getDay() !== 6) return miercoles;
-  }
+    // Martes -> Lunes de esa semana
+    if (dia === 2) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//lunes de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
 
-  // Miércoles festivo → martes
-  if (dia === 3) {
-    var martes = new Date(fecha);
-    martes.setDate(fecha.getDate() - 1);
-    if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) return martes;
-  }
+    // miércoles festivo → martes
+    if (dia === 3) {
+      var martes = new Date(fecha);
+      martes.setDate(fecha.getDate() - 1); //martes de la semana 
+      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
+        return martes;
+      }
+    }
 
-  // Jueves festivo → miércoles
-  if (dia === 4) {
-    var miercoles = new Date(fecha);
-    miercoles.setDate(fecha.getDate() - 1);
-    if (!esFestivo(miercoles) && miercoles.getDay() !== 0 && miercoles.getDay() !== 6) return miercoles;
-  }
+    // Jueves -> Miercoles de esa semana
+    if (dia === 4) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//miercoles de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
 
-  // Viernes festivo → miércoles
-  if (dia === 5) {
-    var miercoles = new Date(fecha);
-    miercoles.setDate(fecha.getDate() - 2);
-    if (!esFestivo(miercoles) && miercoles.getDay() !== 0 && miercoles.getDay() !== 6) return miercoles;
-  }
+    // viernes -> jueves de esa semana
+    if (dia === 5) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//jueves de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
 
   // Si no aplica ninguna regla, devuelve la fecha original
   return fecha;
 }
 
-/*trimestral */
+/*TRIMESTRAL*/ 
 function generarTrimestral() {
   var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
   var hojaOrigen = libroOrigen.getSheetByName("S.Gastos CICLICOS INTERNO PS");
-  var hojaDestino = libroOrigen.getSheetByName("Planeador Despacho");
+  var hojaDestino = libroOrigen.getSheetByName("planeador trimestral");
   //var hojaDestino = libroOrigen.getSheetByName("hojaPrueba");
   
   //var hojaOrigen = libroOrigen.getSheetByName("Copia de S.Gastos CICLICOS INTERNO PS(Personal)");
@@ -1144,17 +1342,13 @@ function generarTrimestral() {
   var anioInicio = 2025, mesInicio = 8;  // Septiembre 2025 (0=Enero)
   var anioFin = 2026, mesFin = 11;       // Diciembre 2026
 
-  // Meses trimestrales
-  var unoLu = [0, 4, 8]; // 1ER LUNES DE ENE, MAYO Y SEP
-  var segundoMier = [2, 5, 8, 11]; // 2DO MIERCOLES DE MAR, JUN, SEP, DIC
-
+  //2DO LUNES DE FEBRERO, MAYO, AGOSTO, NOVIEMBRE
+  var segundoLunes = [1, 4, 7, 10]; //FEBRERO, MAYO, AGOSTO, NOVIEMBRE
 
   var periodicidades = {
-    "1ER LUNES DE ENE, MAYO Y SEP": function(anio) { 
-      return obtenerTrimestral(anio, unoLu, "1ER_LUNES"); 
-    },
-    "2DO MIERCOLES DE MAR, JUN, SEP, DIC": function(anio) { 
-      return obtenerTrimestral(anio, segundoMier, "2DO_MIERCOLES"); 
+    
+    "2DO LUNES DE FEBRERO, MAYO, AGOSTO, NOVIEMBRE": function(anio) { //NUEVO
+      return obtenerTrimestral(anio, segundoLunes, "2DO_LUNES"); 
     }
   };
 
@@ -1215,40 +1409,36 @@ function formatearFechaT(fecha) {
   return dia + "/" + mes + "/" + anio;
 }
 
-// Funciones para calcular lunes/miércoles
 function primerLunesDelMes(anio, mes) {
   var fecha = new Date(anio, mes, 1);
-  while (fecha.getDay() !== 1) fecha.setDate(fecha.getDate() + 1);
+  while (fecha.getDay() !== 1) {
+    fecha.setDate(fecha.getDate() + 1);
+  }
   return fecha;
 }
 
-function primerMiercolesDelMes(anio, mes) {
-  var fecha = new Date(anio, mes, 1);
-  while (fecha.getDay() !== 3) fecha.setDate(fecha.getDate() + 1);
-  return fecha;
-}
-
-function segundoLunesDelMes(anio, mes) {//no se ocupa
+function segundoLunesDelMes(anio, mes) {
   var fecha = primerLunesDelMes(anio, mes);
   fecha.setDate(fecha.getDate() + 7);
   return fecha;
 }
 
-function segundoMiercolesDelMes(anio, mes) {
-  var fecha = primerMiercolesDelMes(anio, mes);
-  fecha.setDate(fecha.getDate() + 7);
+/*function segundoDiaHabilDelMes(anio, mes) {//fallo ==aqui me quedo
+  var fecha = new Date(anio, mes, 1);// 0=Dom, 1=Lun, 2=Mar, 3=Mié... 4=Jueves 5=viernes 6=sabado
+  if (fecha.getDay() === 6) {//sabados 
+    fecha.setDate(fecha.getDate() - 1);
+  }else if(fecha.getDay() === 0){ //y ni domingos
+      fecha.setDate(fecha.getDate() - 2);
+  }
   return fecha;
-}
+}*/
 
 // Devuelve fechas trimestrales correctas
 function obtenerTrimestral(anio, mesesArr, tipo) {
   var fechas = [];
   mesesArr.forEach(function(mes) {
-    if (tipo === "1ER_LUNES") {
-      fechas.push(primerLunesDelMes(anio, mes));
-    }
-    if (tipo === "2DO_MIERCOLES") {
-      fechas.push(segundoMiercolesDelMes(anio, mes));
+    if (tipo === "2DO_LUNES") {
+      fechas.push(segundoLunesDelMes(anio, mes));
     }
   });
   return fechas;
@@ -1308,13 +1498,16 @@ y si no pasa nada pasa
 function ajustarPorFestivoTrime(fechas) {
   var festivosFijos = [
     { mes: 0, dia: 1 },   // 1 Enero
-    { mes: 1, dia: 5 },   // 5 Febrero
-    { mes: 2, dia: 21 },  // 21 Marzo
+    { mes: 1, dia: 2 },   // 5 Febrero //Primer lunes de febrero
+    //{ mes: 1, dia: 5 },   // 5 Febrero ==arreglar el codigo para esto.
+    { mes: 2, dia: 16 },  // 21 Marzo //tercer lunes de marzo
+    //{ mes: 2, dia: 21 },  // 21 Marzo ==arreglar el codigo para este.
     { mes: 4, dia: 1 },   // 1 Mayo
     { mes: 8, dia: 16 },  // 16 Septiembre
     { mes: 11, dia: 12 }, // 12 Diciembre
     { mes: 11, dia: 25 }  // 25 Diciembre
   ];
+  
 
   // 👉 calcular dinámicamente el 3er lunes de noviembre
   function obtenerTercerLunesNoviembre(year) {
@@ -1344,8 +1537,54 @@ function ajustarPorFestivoTrime(fechas) {
 
     var dia = fecha.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mié...
 
-    // Miércoles festivo → martes
+
+    // lunes festivo → viernes de la semana pasada
+    if (dia === 1) {
+      var lunes = new Date(fecha); 
+      lunes.setDate(fecha.getDate() - 3);//viernes de la semana pasada
+      if (!esFestivo(lunes) && lunes.getDay() !== 0 && lunes.getDay() !== 6) {//no domingo, ni sabados
+        return lunes;
+      }
+    }
+
+    // Martes -> Lunes de esa semana
+    if (dia === 2) {
+      var martes = new Date(fecha); 
+      martes.setDate(fecha.getDate() - 1);//lunes de la semana 
+      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {//no domingo, ni sabados
+        return martes;
+      }
+    }
+
+    // miércoles festivo → martes
     if (dia === 3) {
+      var miercoles = new Date(fecha);
+      miercoles.setDate(fecha.getDate() - 1); //martes de la semana 
+      if (!esFestivo(miercoles) && miercoles.getDay() !== 0 && miercoles.getDay() !== 6) {
+        return miercoles;
+      }
+    }
+
+    // Jueves -> Miercoles de esa semana
+    if (dia === 4) {
+      var jueves = new Date(fecha); 
+      jueves.setDate(fecha.getDate() - 1);//miercoles de la semana 
+      if (!esFestivo(jueves) && jueves.getDay() !== 0 && jueves.getDay() !== 6) {//no domingo, ni sabados
+        return jueves;
+      }
+    }
+
+    // viernes -> jueves de esa semana
+    if (dia === 5) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//jueves de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
+
+    // Miércoles festivo → martes
+    /*if (dia === 3) {
       var martes = new Date(fecha);
       martes.setDate(fecha.getDate() - 1);
       if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
@@ -1360,7 +1599,211 @@ function ajustarPorFestivoTrime(fechas) {
       if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {
         return martes;
       }
+    }*/
+
+    return fecha; // si no aplica, regresar fecha original
+  });
+}
+
+/*CUATRIMESTRAL*/
+function generarCuatrimestral() {//funciono
+  var libroOrigen = SpreadsheetApp.getActiveSpreadsheet();
+  var hojaOrigen = libroOrigen.getSheetByName("S.Gastos CICLICOS INTERNO PS");
+  var hojaDestino = libroOrigen.getSheetByName("planeador cuatrimestral");
+  //var hojaDestino = libroOrigen.getSheetByName("hojaPrueba");
+  
+  //var hojaOrigen = libroOrigen.getSheetByName("Copia de S.Gastos CICLICOS INTERNO PS(Personal)");
+  //var hojaDestino = libroOrigen.getSheetByName("Planeador Personal");
+  
+  var datos = hojaOrigen.getRange("A:AE").getValues();
+
+  var ultimaFilaDestino = hojaDestino.getLastRow();
+
+  // Rango de fechas personalizable
+  var anioInicio = 2025, mesInicio = 8;  // Septiembre 2025 (0=Enero)
+  var anioFin = 2026, mesFin = 11;       // Diciembre 2026
+
+   //1ER LUNES DE ENE, MAYO Y SEP
+  var primerLunes = [0, 4, 8]; //FEBRERO, ENE, MAYO Y SEP
+
+  var periodicidades = {
+    
+    "1ER LUNES DE ENE, MAYO Y SEP": function(anio) { //NUEVO
+      return obtenerCuatri(anio, primerLunes); 
     }
+  };
+
+
+  var salida = [];
+
+  for (var i = 5; i < datos.length; i++) {
+    //var periodicidad = (datos[i][29] || "").toString().trim().toUpperCase();
+    var periodicidad = (datos[i][30] || "").toString().trim().toUpperCase();
+    var funcion = periodicidades[periodicidad];
+    if (!funcion) continue;
+
+    // Tomar columnas C:AA (índices 2 a 26)
+    var filaDatos = datos[i].slice(2, 27);
+    //var filaDatos = datos[i].slice(2, 28);
+
+    // Recorrer los años dentro del rango
+    for (var anio = anioInicio; anio <= anioFin; anio++) {
+      var fechas = funcion(anio); // Devuelve un arreglo de fechas trimestrales
+      fechas = ajustarPorFestivoCuatri(fechas, periodicidad); // ajusta lunes/miércoles festivos
+
+      fechas.forEach(function(fecha) {
+        // Solo fechas dentro del rango
+        if (fecha >= new Date(anioInicio, mesInicio, 1) && fecha <= new Date(anioFin, mesFin, 28)) {
+          var fechaFormateada = formatearFechaC(fecha);
+          var nuevaFila = [fechaFormateada].concat(filaDatos);
+
+          // Asegura que llegue hasta la columna AB
+          while (nuevaFila.length < 27) {
+            nuevaFila.push("");
+          }
+          nuevaFila.push("NUEVO");
+
+          salida.push(nuevaFila);
+
+          Logger.log("Periodicidad encontrada: " + periodicidad);
+          Logger.log("Fecha generada: " + fecha);
+        }
+      });
+    }
+  }
+
+  // Escribe la salida en la hoja destino desde la columna B
+  if (salida.length > 0) {
+    hojaDestino.getRange(ultimaFilaDestino + 1, 2, salida.length, salida[0].length).setValues(salida);
+    // ✅ Formatear la columna de fechas (col B)
+    hojaDestino.getRange(ultimaFilaDestino + 1, 2, salida.length, 1)
+             .setNumberFormat("dd/MM/yyyy");
+  }
+}
+
+// Formato de fecha
+function formatearFechaC(fecha) {
+  if (!fecha) return "";
+  var dia = fecha.getDate();
+  var mes = fecha.getMonth() + 1;
+  var anio = fecha.getFullYear();
+  return dia + "/" + mes + "/" + anio;
+}
+
+function primerLunes(anio, mes) {
+  var fecha = new Date(anio, mes, 1);
+  while (fecha.getDay() !== 1) {
+    fecha.setDate(fecha.getDate() + 1);
+  }
+  return fecha;
+}
+
+// Devuelve fechas trimestrales correctas
+function obtenerCuatri(anio, mesesArr) {
+  var fechas = [];
+  mesesArr.forEach(function(mes) {
+      fechas.push(primerLunes(anio, mes));
+    
+  });
+  return fechas;
+}
+
+//dias festivos
+/*
+si cae un dia festivo en miercoles que pase al mastes de esa semana
+si cae lunes festivo que pase al mastes de esa semana
+y si no pasa nada pasa
+ */
+
+function ajustarPorFestivoCuatri(fechas, periodicidad) {
+  var festivosFijos = [
+    { mes: 0, dia: 1 },   // 1 Enero
+    { mes: 1, dia: 2 },   // 5 Febrero //Primer lunes de febrero
+    //{ mes: 1, dia: 5 },   // 5 Febrero ==arreglar el codigo para esto.
+    { mes: 2, dia: 16 },  // 21 Marzo //tercer lunes de marzo
+    //{ mes: 2, dia: 21 },  // 21 Marzo ==arreglar el codigo para este.
+    { mes: 4, dia: 1 },   // 1 Mayo
+    { mes: 8, dia: 16 },  // 16 Septiembre
+    { mes: 11, dia: 12 }, // 12 Diciembre
+    { mes: 11, dia: 25 }  // 25 Diciembre
+  ];
+  
+
+  // 👉 calcular dinámicamente el 3er lunes de noviembre
+  function obtenerTercerLunesNoviembre(year) {
+    var fecha = new Date(year, 10, 1); // 1 Noviembre
+    var primerDia = fecha.getDay();    // 0=Dom, 1=Lun...
+    var primerLunes = primerDia === 1 ? 1 : (8 - primerDia);
+    var tercerLunes = primerLunes + 14; // tercer lunes = primer lunes + 14 días
+    return new Date(year, 10, tercerLunes);
+  }
+
+  function esFestivo(d) {
+    // festivos fijos
+    var esFijo = festivosFijos.some(f => d.getMonth() === f.mes && d.getDate() === f.dia);
+
+    // tercer lunes de noviembre
+    var tercerLunes = obtenerTercerLunesNoviembre(d.getFullYear());
+    var esTercerLunes = d.getMonth() === 10 && d.getDate() === tercerLunes.getDate();
+
+    return esFijo || esTercerLunes;
+  }
+
+  // Recorrer todas las fechas y ajustar
+  return fechas.map(function (fecha) {
+    if (!fecha) return fecha;
+
+    if (!esFestivo(fecha)) return fecha; // si no es festivo, regresar igual
+
+    var dia = fecha.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mié...
+
+
+    // lunes festivo → viernes de la semana pasada
+    if (dia === 1) {
+      var lunes = new Date(fecha); 
+      lunes.setDate(fecha.getDate() - 3);//viernes de la semana pasada
+      if (!esFestivo(lunes) && lunes.getDay() !== 0 && lunes.getDay() !== 6) {//no domingo, ni sabados
+        return lunes;
+      }
+    }
+
+    // Martes -> Lunes de esa semana
+    if (dia === 2) {
+      var martes = new Date(fecha); 
+      martes.setDate(fecha.getDate() - 1);//lunes de la semana 
+      if (!esFestivo(martes) && martes.getDay() !== 0 && martes.getDay() !== 6) {//no domingo, ni sabados
+        return martes;
+      }
+    }
+
+    // miércoles festivo → martes
+    if (dia === 3) {
+      var miercoles = new Date(fecha);
+      miercoles.setDate(fecha.getDate() - 1); //martes de la semana 
+      if (!esFestivo(miercoles) && miercoles.getDay() !== 0 && miercoles.getDay() !== 6) {
+        return miercoles;
+      }
+    }
+
+    // Jueves -> Miercoles de esa semana
+    if (dia === 4) {
+      var jueves = new Date(fecha); 
+      jueves.setDate(fecha.getDate() - 1);//miercoles de la semana 
+      if (!esFestivo(jueves) && jueves.getDay() !== 0 && jueves.getDay() !== 6) {//no domingo, ni sabados
+        return jueves;
+      }
+    }
+
+    // viernes -> jueves de esa semana
+    if (dia === 5) {
+      var viernes = new Date(fecha); 
+      viernes.setDate(fecha.getDate() - 1);//jueves de la semana 
+      if (!esFestivo(viernes) && viernes.getDay() !== 0 && viernes.getDay() !== 6) {//no domingo, ni sabados
+        return viernes;
+      }
+    }
+
+
 
     return fecha; // si no aplica, regresar fecha original
   });
