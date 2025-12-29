@@ -1,0 +1,33 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu("📋 Extraer Info")
+    .addItem("Copiar filas (B > 0)", "extraInfo")
+    .addToUi();
+}
+
+
+
+function extraInfo() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetOrigen = ss.getSheetByName("G2");
+  var sheetDestino = ss.getSheetByName("INT");
+
+  var data = sheetOrigen.getRange("A14:B24").getValues();
+  var resultado = [];
+  Logger.log(resultado)
+
+  for (var i = 0; i < data.length; i++) {
+    if (Number(data[i][1]) > 0) {
+      resultado.push(data[i]);
+    }
+  }
+
+  if (resultado.length > 0) {
+    var filaInicio = 5;  
+    var colInicio = 34;    
+
+    sheetDestino
+      .getRange(filaInicio, colInicio, resultado.length, resultado[0].length)
+      .setValues(resultado);
+  }
+}
