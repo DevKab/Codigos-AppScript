@@ -1,0 +1,13 @@
+=QUERY(
+  IMPORTRANGE("1aZa80FIbwRv2P2M15w44KH7IW2lwTYKhnzboFPWosrY","'RESTRUCTURACION'!D3:K200"),
+  "SELECT Col1
+   WHERE (Col3 = '"&G12&"'
+   OR Col3 = '"&H12&"'
+   OR Col3 = '"&H13&"'
+   OR Col3 = '"&H14&"'
+   OR Col3 = '"&H15&"'
+   OR Col3 = '"&H16&"'
+   OR Col3 = '"&H17&"')
+   AND Col8 = 'ACTIVO'
+   ORDER BY Col1 ASC",
+0)
